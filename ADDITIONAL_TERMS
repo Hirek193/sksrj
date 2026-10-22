@@ -1,0 +1,37 @@
+Additional Terms under Section 7 of the GNU General Public License v3.0
+
+Copyright (C) 2026 Jagodziński Oskar
+
+SKSRJ Timetable generator is licensed under the GNU General Public License v3.0
+or (at your option) any later version. In accordance with Section 7 of
+that License, the following additional terms apply to this program and
+to any work based on it:
+
+1. Author attribution (Section 7(b)).
+   The following notice must be preserved in the source files that
+   contain material from this program, and in the Appropriate Legal
+   Notices (as defined in Section 0 of the License) of any work that
+   contains such material, including modified versions:
+
+       Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+       Original source: https://github.com/Hirek193/sksrj
+
+   In a work with an interactive user interface, the Appropriate
+   Legal Notices containing this attribution must be displayed in a
+   place that the user can easily find and open from within the
+   program, such as a startup screen, an "About" dialog, or a clearly
+   labelled menu item. The attribution must be legible and must not be
+   hidden, obscured, or made inaccessible to the user.
+   
+2. Marking of modified versions (Section 7(c)).
+   Modified versions must be clearly marked as different from the
+   original version, and the origin of the material must not be
+   misrepresented. A modified version must not be presented as the
+   original SKSRJ Timetable generator or as endorsed by its authors.
+
+3. Name and trademarks (Section 7(e)).
+   This License does not grant permission to use the name
+   "SKSRJ Timetable generator", its logo, or other trade names or marks of the
+   project or its authors, except as required to comply with item 1.
+   Modified versions must not use them as their own name without
+   prior written permission from Oskar Jagodziński.
