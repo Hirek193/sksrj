@@ -1,0 +1,15 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Sksrj.App.Views.ConfirmDialog"
+        Width="440" SizeToContent="Height" CanResize="False" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner" SystemDecorations="BorderOnly"
+        Background="{DynamicResource Md.SurfaceContainerHigh}" Title="SKSRJ">
+  <StackPanel Margin="24" Spacing="16">
+    <TextBlock x:Name="TitleText" Classes="headline" FontSize="22" />
+    <TextBlock x:Name="MessageText" Classes="body" TextWrapping="Wrap" Foreground="{DynamicResource Md.OnSurfaceVariant}" />
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,8,0,0">
+      <Button x:Name="CancelButton" Click="OnCancel" />
+      <Button x:Name="OkButton" Classes="filled" Click="OnOk" />
+    </StackPanel>
+  </StackPanel>
+</Window>

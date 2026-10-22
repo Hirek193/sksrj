@@ -1,0 +1,160 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:Sksrj.App.ViewModels"
+        xmlns:m="using:Sksrj.Core.Model"
+        xmlns:v="using:Sksrj.App.Views"
+        xmlns:c="using:Sksrj.App.Controls"
+        xmlns:mi="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        mc:Ignorable="d" d:DesignWidth="1500" d:DesignHeight="900"
+        x:Class="Sksrj.App.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="{Binding WindowTitle}"
+        Icon="avares://SKSRJ/Assets/sksrj.png"
+        Width="1560" Height="940" MinWidth="1080" MinHeight="640"
+        WindowStartupLocation="CenterScreen">
+
+  <Window.KeyBindings>
+    <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCommand}" />
+    <KeyBinding Gesture="Ctrl+Shift+S" Command="{Binding SaveAsCommand}" />
+    <KeyBinding Gesture="Ctrl+O" Command="{Binding OpenCommand}" />
+    <KeyBinding Gesture="Ctrl+N" Command="{Binding NewProjectCommand}" />
+    <KeyBinding Gesture="Ctrl+E" Command="{Binding ExportPdfCommand}" />
+    <KeyBinding Gesture="F5" Command="{Binding RefreshCommand}" />
+  </Window.KeyBindings>
+
+  <Grid RowDefinitions="64,*">
+
+    <!-- ===================================================== górny pasek aplikacji -->
+    <Border Classes="appbar" Grid.Row="0" Background="Transparent">
+      <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center" Margin="16,0,24,0">
+          <Image Source="avares://SKSRJ/Assets/sksrj.png" Width="36" Height="36" />
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="SKSRJ" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock Classes="body-small" Text="System konstrukcji symulacyjnych rozkładów jazdy" />
+          </StackPanel>
+        </StackPanel>
+
+        <!-- wybór karty (pociągu) -->
+        <Border Grid.Column="1" Background="{DynamicResource Md.SurfaceContainerHighest}" CornerRadius="28" Height="48" Padding="6,0" VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal" Spacing="2">
+            <mi:MaterialIcon Kind="CardTextOutline" Width="22" Height="22" Margin="10,0,4,0" Foreground="{DynamicResource Md.OnSurfaceVariant}" />
+            <ComboBox Width="360" BorderThickness="0" Background="Transparent"
+                      ItemsSource="{Binding Project.Timetables}" SelectedItem="{Binding SelectedTimetable}"
+                      ToolTip.Tip="Karta rozkładu jazdy (pociąg) w projekcie">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="m:Timetable">
+                  <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Classes="icon" Command="{Binding AddTimetableCommand}" ToolTip.Tip="Nowa karta (pociąg)"><mi:MaterialIcon Kind="Plus" /></Button>
+            <Button Classes="icon" Command="{Binding DuplicateTimetableCommand}" ToolTip.Tip="Powiel kartę"><mi:MaterialIcon Kind="ContentCopy" /></Button>
+            <Button Classes="icon" Command="{Binding DeleteTimetableCommand}" ToolTip.Tip="Usuń kartę"><mi:MaterialIcon Kind="DeleteOutline" /></Button>
+          </StackPanel>
+        </Border>
+
+        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+          <Button Classes="icon" Command="{Binding NewProjectCommand}" ToolTip.Tip="Nowy projekt (Ctrl+N)"><mi:MaterialIcon Kind="FilePlusOutline" /></Button>
+          <Button Classes="icon" Command="{Binding OpenCommand}" ToolTip.Tip="Otwórz projekt (Ctrl+O)"><mi:MaterialIcon Kind="FolderOpenOutline" /></Button>
+          <Button Classes="icon" Command="{Binding SaveCommand}" ToolTip.Tip="Zapisz (Ctrl+S)"><mi:MaterialIcon Kind="ContentSaveOutline" /></Button>
+          <Button Classes="icon" Command="{Binding SaveAsCommand}" ToolTip.Tip="Zapisz jako… (Ctrl+Shift+S)"><mi:MaterialIcon Kind="ContentSaveEditOutline" /></Button>
+          <Border Width="1" Height="24" Background="{DynamicResource Md.OutlineVariant}" Margin="8,0" />
+          <Button Classes="icon" Command="{Binding ToggleThemeCommand}" ToolTip.Tip="Motyw jasny / ciemny"><mi:MaterialIcon Kind="ThemeLightDark" /></Button>
+          <Button Classes="icon" Command="{Binding TogglePreviewCommand}" ToolTip.Tip="Pokaż / ukryj podgląd"><mi:MaterialIcon Kind="DockRight" /></Button>
+          <Button Classes="outlined" Command="{Binding ExportAllPdfCommand}" Margin="8,0,0,0" ToolTip.Tip="Wszystkie karty projektu w jednym pliku PDF">
+            <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="FileMultipleOutline" /><TextBlock Text="Wszystkie" /></StackPanel>
+          </Button>
+          <Button Classes="filled" Command="{Binding ExportPdfCommand}" ToolTip.Tip="Eksport bieżącej karty do PDF (Ctrl+E)">
+            <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="FilePdfBox" /><TextBlock Text="Eksportuj PDF" /></StackPanel>
+          </Button>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- ===================================================== zawartość -->
+    <Grid Grid.Row="1" x:Name="ContentGrid" ColumnDefinitions="88,*,8,620">
+
+      <!-- rail nawigacyjny -->
+      <ListBox Classes="rail" Grid.Column="0" Margin="0,12,0,0"
+               ItemsSource="{Binding Navigation}" SelectedIndex="{Binding SelectedPage}">
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:NavItem">
+            <StackPanel Spacing="4" Width="80">
+              <Border Classes="pill" HorizontalAlignment="Center">
+                <mi:MaterialIcon Kind="{Binding Icon}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+              <TextBlock Text="{Binding Label}" />
+            </StackPanel>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+
+      <!-- edytor -->
+      <Border Grid.Column="1" Background="{DynamicResource Md.Surface}" CornerRadius="24,24,0,0">
+        <Panel>
+          <v:TrainView IsVisible="{Binding IsTrainPage}" />
+          <v:RouteView IsVisible="{Binding IsRoutePage}" />
+          <v:PointsView IsVisible="{Binding IsPointsPage}" />
+          <v:NotesView IsVisible="{Binding IsNotesPage}" />
+          <v:PrintView IsVisible="{Binding IsPrintPage}" />
+          <StackPanel IsVisible="{Binding !HasTimetable}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+            <mi:MaterialIcon Kind="CardTextOutline" Width="56" Height="56" Foreground="{DynamicResource Md.OnSurfaceVariant}" />
+            <TextBlock Classes="title-medium" Text="Projekt nie zawiera żadnej karty" HorizontalAlignment="Center" />
+            <Button Classes="filled" Command="{Binding AddTimetableCommand}" HorizontalAlignment="Center">
+              <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="Plus" /><TextBlock Text="Dodaj kartę" /></StackPanel>
+            </Button>
+          </StackPanel>
+        </Panel>
+      </Border>
+
+      <GridSplitter Grid.Column="2" x:Name="Splitter" ResizeDirection="Columns" Width="8" IsVisible="{Binding PreviewVisible}" />
+
+      <!-- podgląd -->
+      <Border Grid.Column="3" x:Name="PreviewPane" Classes="pane" Background="{DynamicResource Md.PreviewBackdrop}" IsVisible="{Binding PreviewVisible}" Margin="0,0,0,0">
+        <Grid RowDefinitions="Auto,*,Auto">
+          <Border Background="{DynamicResource Md.SurfaceContainerHigh}" CornerRadius="24,24,0,0" Padding="20,10,10,10">
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Classes="title-medium" Text="Podgląd karty" />
+                <TextBlock Classes="body-small" Text="{Binding PageCountText}" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                <Button Classes="icon" Command="{Binding ZoomOutCommand}" ToolTip.Tip="Pomniejsz"><mi:MaterialIcon Kind="MagnifyMinusOutline" /></Button>
+                <TextBlock Text="{Binding ZoomText}" VerticalAlignment="Center" Width="44" TextAlignment="Center" Classes="label" />
+                <Button Classes="icon" Command="{Binding ZoomInCommand}" ToolTip.Tip="Powiększ"><mi:MaterialIcon Kind="MagnifyPlusOutline" /></Button>
+                <Button Classes="icon" Command="{Binding RefreshCommand}" ToolTip.Tip="Odśwież (F5)"><mi:MaterialIcon Kind="Refresh" /></Button>
+              </StackPanel>
+            </Grid>
+          </Border>
+          <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" x:Name="PreviewScroll">
+            <c:PagePreview Pages="{Binding PreviewPages}" Zoom="{Binding Zoom}" SheetLayout="{Binding SheetLayout}" HorizontalAlignment="Center" />
+          </ScrollViewer>
+          <Border Grid.Row="2" Classes="warning" Margin="12" IsVisible="{Binding WarningCount, Converter={StaticResource HasItems}}" MaxHeight="160">
+            <Grid ColumnDefinitions="Auto,*">
+              <mi:MaterialIcon Kind="AlertCircleOutline" Width="20" Height="20" VerticalAlignment="Top" Margin="0,1,10,0" />
+              <ScrollViewer Grid.Column="1">
+                <ItemsControl ItemsSource="{Binding Warnings}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                      <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="12" Margin="0,1" />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </ScrollViewer>
+            </Grid>
+          </Border>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <!-- snackbar -->
+    <Border Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,24"
+            Background="{DynamicResource Md.InverseSurface}" CornerRadius="4" Padding="16,12" MinWidth="280"
+            IsVisible="{Binding Snackbar, Converter={x:Static ObjectConverters.IsNotNull}}" BoxShadow="0 3 8 0 #40000000">
+      <TextBlock Text="{Binding Snackbar}" Foreground="{DynamicResource Md.InverseOnSurface}" FontSize="14" />
+    </Border>
+  </Grid>
+</Window>

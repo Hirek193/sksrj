@@ -1,0 +1,78 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sksrj.App.ViewModels"
+             xmlns:m="using:Sksrj.Core.Model"
+             xmlns:dict="using:Sksrj.Core.Dictionaries"
+             xmlns:mi="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Sksrj.App.Views.NotesView"
+             x:DataType="vm:MainViewModel">
+  <ScrollViewer IsVisible="{Binding HasTimetable}">
+    <StackPanel Margin="28,24,28,40" Spacing="16" MaxWidth="980">
+      <StackPanel Spacing="4">
+        <TextBlock Classes="headline" Text="Uwagi, odnośniki i terminy kursowania" />
+        <TextBlock Classes="body-small" TextWrapping="Wrap" Text="Treści drukowane pod tabelą rozkładu (Ir-11, § 32 ust. 6 pkt 2 lit. o–p)." />
+      </StackPanel>
+
+      <Border Classes="card">
+        <StackPanel Spacing="12">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <mi:MaterialIcon Kind="CalendarRange" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+            <TextBlock Classes="title-medium" Text="Kursuje" VerticalAlignment="Center" />
+          </StackPanel>
+          <TextBlock Classes="body-small" TextWrapping="Wrap" Text="Na końcu ostatniej strony. Przykład: „- 14.III-25.III ;” lub „- (A) 14.XII-30.VI ;”. Kliknij symbol, by go dopisać." />
+          <ItemsControl ItemsSource="{x:Static dict:Ir11.RunningDaySymbols}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="dict:CodeEntry">
+                <Button Classes="chip" Margin="0,0,8,8" Content="{Binding Code}" ToolTip.Tip="{Binding Description}"
+                        Command="{ReflectionBinding $parent[UserControl].DataContext.InsertRunningSymbolCommand}" CommandParameter="{Binding}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBox Classes="multiline mono" Text="{Binding SelectedTimetable.RunningDays}" MinHeight="90" />
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="12">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <mi:MaterialIcon Kind="Asterisk" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+              <TextBlock Classes="title-medium" Text="Uwagi dodatkowe – odnośniki *1), *2) …" VerticalAlignment="Center" />
+            </StackPanel>
+            <Button Grid.Column="1" Classes="tonal small" Command="{Binding AddFootnoteCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="Plus" /><TextBlock Text="Odnośnik" /></StackPanel>
+            </Button>
+          </Grid>
+          <TextBlock Classes="body-small" TextWrapping="Wrap" Text="Odnośnik drukowany jest pod tabelą na tej stronie, na której jego znacznik występuje w skrótach lub uwagach posterunku (np. „*1), R1, H”). Nieużyty – na ostatniej stronie." />
+          <ItemsControl ItemsSource="{Binding SelectedTimetable.Footnotes}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="8" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="m:Footnote">
+                <Grid ColumnDefinitions="90,10,*,8,Auto">
+                  <TextBox Text="{Binding Marker}" FontWeight="SemiBold" />
+                  <TextBox Grid.Column="2" Text="{Binding Text}" Watermark="treść, np. południowy okręg nastawczy stacji" />
+                  <Button Grid.Column="4" Classes="icon danger" ToolTip.Tip="Usuń"
+                          Command="{ReflectionBinding $parent[UserControl].DataContext.RemoveFootnoteCommand}" CommandParameter="{Binding}">
+                    <mi:MaterialIcon Kind="DeleteOutline" />
+                  </Button>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="12">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <mi:MaterialIcon Kind="CommentTextOutline" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+            <TextBlock Classes="title-medium" Text="Uwagi do rozkładu" VerticalAlignment="Center" />
+          </StackPanel>
+          <TextBlock Classes="body-small" TextWrapping="Wrap" Text="Szczegółowa informacja o charakterze pociągu i rodzaju przesyłki (np. numer zgody na przewóz przesyłki nadzwyczajnej). Puste – sekcja nie jest drukowana." />
+          <TextBox Classes="multiline" Text="{Binding SelectedTimetable.Remarks}" MinHeight="90" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

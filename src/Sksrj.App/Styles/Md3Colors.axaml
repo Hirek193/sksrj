@@ -1,0 +1,74 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- Material Design 3 – schemat kolorów wygenerowany z koloru bazowego #00639B -->
+  <ResourceDictionary.ThemeDictionaries>
+    <ResourceDictionary x:Key="Light">
+      <SolidColorBrush x:Key="Md.Primary" Color="#00639B" />
+      <SolidColorBrush x:Key="Md.OnPrimary" Color="#FFFFFF" />
+      <SolidColorBrush x:Key="Md.PrimaryContainer" Color="#CEE5FF" />
+      <SolidColorBrush x:Key="Md.OnPrimaryContainer" Color="#001D33" />
+      <SolidColorBrush x:Key="Md.Secondary" Color="#51606F" />
+      <SolidColorBrush x:Key="Md.OnSecondary" Color="#FFFFFF" />
+      <SolidColorBrush x:Key="Md.SecondaryContainer" Color="#D5E4F7" />
+      <SolidColorBrush x:Key="Md.OnSecondaryContainer" Color="#0E1D2A" />
+      <SolidColorBrush x:Key="Md.Tertiary" Color="#68587A" />
+      <SolidColorBrush x:Key="Md.TertiaryContainer" Color="#EFDBFF" />
+      <SolidColorBrush x:Key="Md.OnTertiaryContainer" Color="#231533" />
+      <SolidColorBrush x:Key="Md.Error" Color="#BA1A1A" />
+      <SolidColorBrush x:Key="Md.ErrorContainer" Color="#FFDAD6" />
+      <SolidColorBrush x:Key="Md.OnErrorContainer" Color="#410002" />
+      <SolidColorBrush x:Key="Md.Surface" Color="#F8F9FF" />
+      <SolidColorBrush x:Key="Md.OnSurface" Color="#191C20" />
+      <SolidColorBrush x:Key="Md.OnSurfaceVariant" Color="#42474E" />
+      <SolidColorBrush x:Key="Md.Outline" Color="#72777F" />
+      <SolidColorBrush x:Key="Md.OutlineVariant" Color="#C2C7CF" />
+      <SolidColorBrush x:Key="Md.SurfaceContainerLowest" Color="#FFFFFF" />
+      <SolidColorBrush x:Key="Md.SurfaceContainerLow" Color="#F2F3F9" />
+      <SolidColorBrush x:Key="Md.SurfaceContainer" Color="#ECEEF4" />
+      <SolidColorBrush x:Key="Md.SurfaceContainerHigh" Color="#E6E8EE" />
+      <SolidColorBrush x:Key="Md.SurfaceContainerHighest" Color="#E1E2E8" />
+      <SolidColorBrush x:Key="Md.InverseSurface" Color="#2E3135" />
+      <SolidColorBrush x:Key="Md.InverseOnSurface" Color="#EFF0F7" />
+      <SolidColorBrush x:Key="Md.StateHover" Color="#14191C20" />
+      <SolidColorBrush x:Key="Md.StatePressed" Color="#1F191C20" />
+      <SolidColorBrush x:Key="Md.PrimaryHover" Color="#1400639B" />
+      <SolidColorBrush x:Key="Md.PrimaryFilledHover" Color="#1A6FA6" />
+      <SolidColorBrush x:Key="Md.Scrim" Color="#66000000" />
+      <SolidColorBrush x:Key="Md.PreviewBackdrop" Color="#E1E2E8" />
+    </ResourceDictionary>
+    <ResourceDictionary x:Key="Dark">
+      <SolidColorBrush x:Key="Md.Primary" Color="#96CCFF" />
+      <SolidColorBrush x:Key="Md.OnPrimary" Color="#003353" />
+      <SolidColorBrush x:Key="Md.PrimaryContainer" Color="#004A77" />
+      <SolidColorBrush x:Key="Md.OnPrimaryContainer" Color="#CEE5FF" />
+      <SolidColorBrush x:Key="Md.Secondary" Color="#B9C8DA" />
+      <SolidColorBrush x:Key="Md.OnSecondary" Color="#233240" />
+      <SolidColorBrush x:Key="Md.SecondaryContainer" Color="#3A4857" />
+      <SolidColorBrush x:Key="Md.OnSecondaryContainer" Color="#D5E4F7" />
+      <SolidColorBrush x:Key="Md.Tertiary" Color="#D3BFE6" />
+      <SolidColorBrush x:Key="Md.TertiaryContainer" Color="#4F4061" />
+      <SolidColorBrush x:Key="Md.OnTertiaryContainer" Color="#EFDBFF" />
+      <SolidColorBrush x:Key="Md.Error" Color="#FFB4AB" />
+      <SolidColorBrush x:Key="Md.ErrorContainer" Color="#93000A" />
+      <SolidColorBrush x:Key="Md.OnErrorContainer" Color="#FFDAD6" />
+      <SolidColorBrush x:Key="Md.Surface" Color="#111418" />
+      <SolidColorBrush x:Key="Md.OnSurface" Color="#E1E2E8" />
+      <SolidColorBrush x:Key="Md.OnSurfaceVariant" Color="#C2C7CF" />
+      <SolidColorBrush x:Key="Md.Outline" Color="#8C9199" />
+      <SolidColorBrush x:Key="Md.OutlineVariant" Color="#42474E" />
+      <SolidColorBrush x:Key="Md.SurfaceContainerLowest" Color="#0C0E13" />
+      <SolidColorBrush x:Key="Md.SurfaceContainerLow" Color="#191C20" />
+      <SolidColorBrush x:Key="Md.SurfaceContainer" Color="#1D2024" />
+      <SolidColorBrush x:Key="Md.SurfaceContainerHigh" Color="#272A2F" />
+      <SolidColorBrush x:Key="Md.SurfaceContainerHighest" Color="#32353A" />
+      <SolidColorBrush x:Key="Md.InverseSurface" Color="#E1E2E8" />
+      <SolidColorBrush x:Key="Md.InverseOnSurface" Color="#2E3135" />
+      <SolidColorBrush x:Key="Md.StateHover" Color="#14E1E2E8" />
+      <SolidColorBrush x:Key="Md.StatePressed" Color="#1FE1E2E8" />
+      <SolidColorBrush x:Key="Md.PrimaryHover" Color="#1496CCFF" />
+      <SolidColorBrush x:Key="Md.PrimaryFilledHover" Color="#AAD6FF" />
+      <SolidColorBrush x:Key="Md.Scrim" Color="#99000000" />
+      <SolidColorBrush x:Key="Md.PreviewBackdrop" Color="#0C0E13" />
+    </ResourceDictionary>
+  </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

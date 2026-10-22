@@ -1,0 +1,414 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mi="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia">
+
+  <!-- ============================================================ Material Design 3 dla Avalonia -->
+
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{DynamicResource Md.SurfaceContainer}" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSurface}" />
+    <Setter Property="FontFamily" Value="fonts:Inter#Inter, $Default" />
+  </Style>
+
+  <!-- typografia -->
+  <Style Selector="TextBlock.display">
+    <Setter Property="FontSize" Value="28" /><Setter Property="FontWeight" Value="Normal" />
+  </Style>
+  <Style Selector="TextBlock.headline">
+    <Setter Property="FontSize" Value="24" /><Setter Property="FontWeight" Value="Normal" />
+  </Style>
+  <Style Selector="TextBlock.title-large">
+    <Setter Property="FontSize" Value="22" /><Setter Property="FontWeight" Value="Normal" />
+  </Style>
+  <Style Selector="TextBlock.title-medium">
+    <Setter Property="FontSize" Value="16" /><Setter Property="FontWeight" Value="Medium" />
+  </Style>
+  <Style Selector="TextBlock.title-small">
+    <Setter Property="FontSize" Value="14" /><Setter Property="FontWeight" Value="Medium" />
+  </Style>
+  <Style Selector="TextBlock.body">
+    <Setter Property="FontSize" Value="14" />
+  </Style>
+  <Style Selector="TextBlock.body-small">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSurfaceVariant}" />
+  </Style>
+  <Style Selector="TextBlock.label">
+    <Setter Property="FontSize" Value="12" /><Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSurfaceVariant}" />
+  </Style>
+  <Style Selector="TextBlock.muted">
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSurfaceVariant}" />
+  </Style>
+
+  <!-- powierzchnie / karty -->
+  <Style Selector="Border.card">
+    <Setter Property="Background" Value="{DynamicResource Md.SurfaceContainerLow}" />
+    <Setter Property="CornerRadius" Value="16" />
+    <Setter Property="Padding" Value="20,16,20,20" />
+  </Style>
+  <Style Selector="Border.card-outlined">
+    <Setter Property="Background" Value="{DynamicResource Md.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Md.OutlineVariant}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="16,12" />
+  </Style>
+  <Style Selector="Border.appbar">
+    <Setter Property="Background" Value="{DynamicResource Md.SurfaceContainer}" />
+    <Setter Property="Height" Value="64" />
+    <Setter Property="Padding" Value="8,0,16,0" />
+  </Style>
+  <Style Selector="Border.pane">
+    <Setter Property="Background" Value="{DynamicResource Md.SurfaceContainer}" />
+    <Setter Property="CornerRadius" Value="24,24,0,0" />
+  </Style>
+  <Style Selector="Border.info">
+    <Setter Property="Background" Value="{DynamicResource Md.SecondaryContainer}" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="14,10" />
+  </Style>
+  <Style Selector="Border.info TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSecondaryContainer}" />
+  </Style>
+  <Style Selector="Border.warning">
+    <Setter Property="Background" Value="{DynamicResource Md.ErrorContainer}" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="14,10" />
+  </Style>
+  <Style Selector="Border.warning TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnErrorContainer}" />
+  </Style>
+  <Style Selector="Border.warning mi|MaterialIcon">
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnErrorContainer}" />
+  </Style>
+  <Style Selector="Border.badge">
+    <Setter Property="Background" Value="{DynamicResource Md.PrimaryContainer}" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="MinWidth" Value="28" />
+    <Setter Property="Height" Value="24" />
+    <Setter Property="Padding" Value="6,0" />
+  </Style>
+  <Style Selector="Border.badge TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnPrimaryContainer}" />
+    <Setter Property="FontSize" Value="12" /><Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="HorizontalAlignment" Value="Center" /><Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Separator">
+    <Setter Property="Background" Value="{DynamicResource Md.OutlineVariant}" />
+    <Setter Property="Height" Value="1" />
+    <Setter Property="Margin" Value="0,8" />
+  </Style>
+
+  <!-- pole z etykietą -->
+  <Style Selector="HeaderedContentControl.field">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel Spacing="4">
+          <TextBlock Classes="label" Text="{TemplateBinding Header}" Margin="4,0,0,0" TextTrimming="CharacterEllipsis" />
+          <ContentPresenter Content="{TemplateBinding Content}" />
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+
+  <!-- przyciski -->
+  <Style Selector="Button">
+    <Setter Property="CornerRadius" Value="20" />
+    <Setter Property="MinHeight" Value="40" />
+    <Setter Property="Padding" Value="20,0" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.Primary}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Md.PrimaryHover}" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.Primary}" />
+  </Style>
+  <Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Md.StatePressed}" />
+  </Style>
+  <Style Selector="Button:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.Outline}" />
+  </Style>
+
+  <Style Selector="Button.filled">
+    <Setter Property="Background" Value="{DynamicResource Md.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnPrimary}" />
+  </Style>
+  <Style Selector="Button.filled:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Md.PrimaryFilledHover}" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnPrimary}" />
+  </Style>
+  <Style Selector="Button.filled:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Md.SurfaceContainerHighest}" />
+  </Style>
+
+  <Style Selector="Button.tonal">
+    <Setter Property="Background" Value="{DynamicResource Md.SecondaryContainer}" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSecondaryContainer}" />
+  </Style>
+  <Style Selector="Button.tonal:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Md.SecondaryContainer}" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSecondaryContainer}" />
+    <Setter Property="Opacity" Value="0.88" />
+  </Style>
+
+  <Style Selector="Button.outlined">
+    <Setter Property="BorderBrush" Value="{DynamicResource Md.Outline}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+  <Style Selector="Button.outlined:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Md.Outline}" />
+  </Style>
+
+  <Style Selector="Button.icon">
+    <Setter Property="Width" Value="40" />
+    <Setter Property="Height" Value="40" />
+    <Setter Property="MinHeight" Value="40" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSurfaceVariant}" />
+  </Style>
+  <Style Selector="Button.icon:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Md.StateHover}" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSurface}" />
+  </Style>
+  <Style Selector="Button.small">
+    <Setter Property="MinHeight" Value="32" /><Setter Property="Height" Value="32" />
+    <Setter Property="Padding" Value="12,0" /><Setter Property="FontSize" Value="13" />
+  </Style>
+  <Style Selector="Button.icon.small">
+    <Setter Property="Width" Value="32" />
+  </Style>
+  <Style Selector="Button.chip">
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="MinHeight" Value="32" /><Setter Property="Height" Value="32" />
+    <Setter Property="Padding" Value="12,0" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Md.OutlineVariant}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSurfaceVariant}" />
+    <Setter Property="FontSize" Value="13" />
+  </Style>
+  <Style Selector="Button.chip:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Md.StateHover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Md.Outline}" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSurface}" />
+  </Style>
+  <Style Selector="Button.danger">
+    <Setter Property="Foreground" Value="{DynamicResource Md.Error}" />
+  </Style>
+  <Style Selector="Button mi|MaterialIcon">
+    <Setter Property="Width" Value="20" /><Setter Property="Height" Value="20" />
+  </Style>
+  <Style Selector="Button.small mi|MaterialIcon">
+    <Setter Property="Width" Value="18" /><Setter Property="Height" Value="18" />
+  </Style>
+
+  <!-- FAB -->
+  <Style Selector="Button.fab">
+    <Setter Property="CornerRadius" Value="16" />
+    <Setter Property="Height" Value="56" /><Setter Property="MinHeight" Value="56" />
+    <Setter Property="Padding" Value="16,0,20,0" />
+    <Setter Property="Background" Value="{DynamicResource Md.PrimaryContainer}" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnPrimaryContainer}" />
+  </Style>
+  <Style Selector="Button.fab:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Md.PrimaryContainer}" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnPrimaryContainer}" />
+    <Setter Property="Opacity" Value="0.9" />
+  </Style>
+  <Style Selector="Button.fab mi|MaterialIcon">
+    <Setter Property="Width" Value="24" /><Setter Property="Height" Value="24" />
+  </Style>
+
+  <!-- pola tekstowe (outlined) -->
+  <Style Selector="TextBox">
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="MinHeight" Value="40" />
+    <Setter Property="Padding" Value="12,9" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSurface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Md.Outline}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="SelectionBrush" Value="{DynamicResource Md.PrimaryContainer}" />
+    <Setter Property="SelectionForegroundBrush" Value="{DynamicResource Md.OnPrimaryContainer}" />
+    <Setter Property="CaretBrush" Value="{DynamicResource Md.Primary}" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Md.OnSurface}" />
+  </Style>
+  <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Md.Primary}" />
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
+  <Style Selector="TextBox:focus">
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSurface}" />
+  </Style>
+  <Style Selector="TextBox /template/ TextBlock#PART_Watermark">
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSurfaceVariant}" />
+    <Setter Property="Opacity" Value="0.7" />
+  </Style>
+  <Style Selector="TextBox.multiline">
+    <Setter Property="AcceptsReturn" Value="True" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="VerticalContentAlignment" Value="Top" />
+    <Setter Property="MinHeight" Value="72" />
+  </Style>
+  <Style Selector="TextBox.mono">
+    <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, DejaVu Sans Mono, monospace" />
+  </Style>
+  <Style Selector="TextBox.cell">
+    <Setter Property="MinHeight" Value="36" />
+    <Setter Property="Height" Value="36" />
+    <Setter Property="Padding" Value="8,6" />
+  </Style>
+
+  <Style Selector="AutoCompleteBox">
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="MinHeight" Value="40" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Md.Outline}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+  <Style Selector="AutoCompleteBox TextBox">
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <!-- ComboBox -->
+  <Style Selector="ComboBox">
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="MinHeight" Value="40" />
+    <Setter Property="Padding" Value="12,0,8,0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Md.Outline}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="FontSize" Value="14" />
+  </Style>
+  <Style Selector="ComboBox:pointerover /template/ Border#Background">
+    <Setter Property="Background" Value="{DynamicResource Md.StateHover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Md.OnSurface}" />
+  </Style>
+  <Style Selector="ComboBox.cell">
+    <Setter Property="MinHeight" Value="36" /><Setter Property="Height" Value="36" />
+  </Style>
+  <Style Selector="ComboBoxItem">
+    <Setter Property="MinHeight" Value="40" />
+    <Setter Property="Padding" Value="12,8" />
+  </Style>
+
+  <!-- menu / flyouty -->
+  <Style Selector="FlyoutPresenter">
+    <Setter Property="Background" Value="{DynamicResource Md.SurfaceContainer}" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0,8" />
+    <Setter Property="MaxHeight" Value="520" />
+  </Style>
+  <Style Selector="MenuFlyoutPresenter">
+    <Setter Property="Background" Value="{DynamicResource Md.SurfaceContainer}" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="ToolTip">
+    <Setter Property="Background" Value="{DynamicResource Md.InverseSurface}" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.InverseOnSurface}" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Padding" Value="8,4" />
+  </Style>
+
+  <!-- listy -->
+  <Style Selector="ListBox">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="ListBox.list ListBoxItem">
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="12,8" />
+    <Setter Property="Margin" Value="0,1" />
+  </Style>
+  <Style Selector="ListBox.list ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Md.StateHover}" />
+  </Style>
+  <Style Selector="ListBox.list ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Md.SecondaryContainer}" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSecondaryContainer}" />
+  </Style>
+  <Style Selector="ListBox.list ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Md.SecondaryContainer}" />
+  </Style>
+  <Style Selector="ListBox.list ListBoxItem:selected:focus /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Md.SecondaryContainer}" />
+  </Style>
+
+  <!-- rail nawigacyjny -->
+  <Style Selector="ListBox.rail ListBoxItem">
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Margin" Value="0,0,0,12" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="ListBox.rail ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="ListBox.rail ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox.rail ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter, ListBox.rail ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox.rail ListBoxItem:selected:focus /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="ListBox.rail ListBoxItem Border.pill">
+    <Setter Property="Width" Value="56" /><Setter Property="Height" Value="32" />
+    <Setter Property="CornerRadius" Value="16" />
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="ListBox.rail ListBoxItem:pointerover Border.pill">
+    <Setter Property="Background" Value="{DynamicResource Md.StateHover}" />
+  </Style>
+  <Style Selector="ListBox.rail ListBoxItem:selected Border.pill">
+    <Setter Property="Background" Value="{DynamicResource Md.SecondaryContainer}" />
+  </Style>
+  <Style Selector="ListBox.rail ListBoxItem mi|MaterialIcon">
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSurfaceVariant}" />
+    <Setter Property="Width" Value="24" /><Setter Property="Height" Value="24" />
+  </Style>
+  <Style Selector="ListBox.rail ListBoxItem:selected mi|MaterialIcon">
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSecondaryContainer}" />
+  </Style>
+  <Style Selector="ListBox.rail ListBoxItem TextBlock">
+    <Setter Property="FontSize" Value="12" /><Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSurfaceVariant}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="ListBox.rail ListBoxItem:selected TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Md.OnSurface}" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+
+  <!-- przełączniki -->
+  <Style Selector="CheckBox">
+    <Setter Property="FontSize" Value="14" />
+  </Style>
+  <Style Selector="ToggleSwitch">
+    <Setter Property="FontSize" Value="14" />
+  </Style>
+  <Style Selector="RadioButton">
+    <Setter Property="FontSize" Value="14" />
+  </Style>
+
+  <Style Selector="GridSplitter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="GridSplitter:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Md.OutlineVariant}" />
+  </Style>
+</Styles>

@@ -1,0 +1,161 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sksrj.App.ViewModels"
+             xmlns:dict="using:Sksrj.Core.Dictionaries"
+             xmlns:mi="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Sksrj.App.Views.TrainView"
+             x:DataType="vm:MainViewModel">
+  <ScrollViewer IsVisible="{Binding HasTimetable}">
+    <StackPanel Margin="28,24,28,40" Spacing="16" MaxWidth="980" HorizontalAlignment="Stretch">
+      <StackPanel Spacing="4">
+        <TextBlock Classes="headline" Text="Pociąg i strona tytułowa" />
+        <TextBlock Classes="body-small" TextWrapping="Wrap"
+                   Text="Dane strony tytułowej karty rozkładu jazdy (Ir-11, § 32 ust. 6 pkt 1 i Załącznik 5) oraz nagłówka stron szczegółowego rozkładu." />
+      </StackPanel>
+
+      <!-- ============================================ identyfikacja -->
+      <Border Classes="card">
+        <StackPanel Spacing="14">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <mi:MaterialIcon Kind="Train" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+            <TextBlock Classes="title-medium" Text="Identyfikacja pociągu" VerticalAlignment="Center" />
+          </StackPanel>
+          <Grid ColumnDefinitions="*,16,*,16,*">
+            <HeaderedContentControl Classes="field" Header="Rodzaj pociągu (skrót z kol. 6)">
+              <AutoCompleteBox Text="{Binding SelectedTimetable.TrainCategory}" ItemsSource="{Binding CategoryCodes}"
+                               FilterMode="StartsWithOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="360"
+                               ValueMemberBinding="{Binding Code, x:DataType=dict:CodeEntry}" Watermark="np. ROJ, EIJ, TME">
+                <AutoCompleteBox.ItemTemplate>
+                  <DataTemplate x:DataType="dict:CodeEntry">
+                    <StackPanel Orientation="Horizontal" Spacing="10" MaxWidth="520">
+                      <TextBlock Text="{Binding Code}" FontWeight="SemiBold" Width="40" />
+                      <TextBlock Text="{Binding Description}" TextTrimming="CharacterEllipsis" Classes="muted" FontSize="12" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </DataTemplate>
+                </AutoCompleteBox.ItemTemplate>
+              </AutoCompleteBox>
+            </HeaderedContentControl>
+            <HeaderedContentControl Grid.Column="2" Classes="field" Header="Numer pociągu">
+              <TextBox Text="{Binding SelectedTimetable.TrainNumber}" Watermark="np. 1500/1" />
+            </HeaderedContentControl>
+            <HeaderedContentControl Grid.Column="4" Classes="field" Header="Numer systemowy (w nawiasie)">
+              <TextBox Text="{Binding SelectedTimetable.SystemNumber}" Watermark="np. 114144" />
+            </HeaderedContentControl>
+          </Grid>
+          <Grid ColumnDefinitions="*,16,*,8,Auto">
+            <HeaderedContentControl Classes="field" Header="Relacja – od">
+              <TextBox Text="{Binding SelectedTimetable.RelationFrom}" Watermark="pusta = nazwa pierwszego posterunku" />
+            </HeaderedContentControl>
+            <HeaderedContentControl Grid.Column="2" Classes="field" Header="Relacja – do">
+              <TextBox Text="{Binding SelectedTimetable.RelationTo}" Watermark="pusta = nazwa ostatniego posterunku" />
+            </HeaderedContentControl>
+            <Button Grid.Column="4" Classes="tonal" VerticalAlignment="Bottom" Command="{Binding FillRelationCommand}" ToolTip.Tip="Wpisz nazwy pierwszego i ostatniego posterunku">
+              <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="ArrowLeftRight" /><TextBlock Text="Z trasy" /></StackPanel>
+            </Button>
+          </Grid>
+          <HeaderedContentControl Classes="field" Header="Nagłówek stron rozkładu (opcjonalnie – zastępuje składany automatycznie)">
+            <TextBox Text="{Binding SelectedTimetable.HeaderOverride}" Watermark="automatycznie: rodzaje pociągu, numer, (nr systemowy) Relacja od - do" />
+          </HeaderedContentControl>
+        </StackPanel>
+      </Border>
+
+      <!-- ============================================ strona tytułowa -->
+      <Border Classes="card">
+        <StackPanel Spacing="14">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <mi:MaterialIcon Kind="FileDocumentOutline" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+            <TextBlock Classes="title-medium" Text="Strona tytułowa" VerticalAlignment="Center" />
+          </StackPanel>
+          <HeaderedContentControl Classes="field" Header="Wydawca – nagłówek karty (każdy wiersz w nowej linii)">
+            <TextBox Classes="multiline" Text="{Binding SelectedTimetable.Issuer}" MinHeight="84" />
+          </HeaderedContentControl>
+          <Grid ColumnDefinitions="*,8,Auto">
+            <HeaderedContentControl Classes="field" Header="Rodzaj rozkładu jazdy">
+              <TextBox Text="{Binding SelectedTimetable.TimetableKind}" Watermark="np. ROCZNY ROZKŁAD JAZDY" />
+            </HeaderedContentControl>
+            <Button Grid.Column="2" Classes="tonal" VerticalAlignment="Bottom" ToolTip.Tip="Wybierz z listy">
+              <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="FormatListBulleted" /><TextBlock Text="Wzory" /></StackPanel>
+              <Button.Flyout>
+                <Flyout Placement="BottomEdgeAlignedRight">
+                  <ItemsControl ItemsSource="{Binding TimetableKinds}" Width="400">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="x:String">
+                        <Button Content="{Binding}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" CornerRadius="0" Padding="16,0"
+                                Foreground="{DynamicResource Md.OnSurface}" FontWeight="Normal"
+                                Command="{ReflectionBinding $parent[ItemsControl].DataContext.SetTimetableKindCommand}" CommandParameter="{Binding}" />
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </Flyout>
+              </Button.Flyout>
+            </Button>
+          </Grid>
+          <HeaderedContentControl Classes="field" Header="Przewoźnik">
+            <TextBox Text="{Binding SelectedTimetable.Carrier}" Watermark="np. Koleje Fikcyjne Spółka z o.o." />
+          </HeaderedContentControl>
+          <Grid ColumnDefinitions="2*,16,*">
+            <HeaderedContentControl Classes="field" Header="Wniosek nr">
+              <TextBox Text="{Binding SelectedTimetable.ApplicationNumber}" />
+            </HeaderedContentControl>
+            <HeaderedContentControl Grid.Column="2" Classes="field" Header="z dnia">
+              <TextBox Text="{Binding SelectedTimetable.ApplicationDate}" Watermark="dd.mm.rrrr" />
+            </HeaderedContentControl>
+          </Grid>
+          <Grid ColumnDefinitions="2*,16,*">
+            <HeaderedContentControl Classes="field" Header="Zarządzenie (sygnatura)">
+              <TextBox Text="{Binding SelectedTimetable.OrderNumber}" />
+            </HeaderedContentControl>
+            <HeaderedContentControl Grid.Column="2" Classes="field" Header="z dnia">
+              <TextBox Text="{Binding SelectedTimetable.OrderDate}" Watermark="dd.mm.rrrr" />
+            </HeaderedContentControl>
+          </Grid>
+          <Border Classes="card-outlined">
+            <StackPanel Spacing="10">
+              <TextBlock Classes="label" Text="Generator sygnatury zarządzenia (§ 35 ust. 3) – id wniosku = numer systemowy" />
+              <Grid ColumnDefinitions="2*,12,90,12,*,12,Auto">
+                <ComboBox ItemsSource="{Binding OrderTypes}" SelectedItem="{Binding OrderType}" />
+                <TextBox Grid.Column="2" Text="{Binding OrderYear}" Watermark="rok" />
+                <TextBox Grid.Column="4" Text="{Binding OrderSuffix}" Watermark="nr harmonogramu / cyklu, np. 15 lub 6-1" />
+                <Button Grid.Column="6" Classes="tonal" Command="{Binding BuildOrderNumberCommand}">
+                  <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="AutoFix" /><TextBlock Text="Wstaw" /></StackPanel>
+                </Button>
+              </Grid>
+            </StackPanel>
+          </Border>
+          <Grid ColumnDefinitions="*,16,*">
+            <HeaderedContentControl Classes="field" Header="„wygenerowano w systemie”">
+              <TextBox Text="{Binding SelectedTimetable.SystemName}" />
+            </HeaderedContentControl>
+            <ToggleSwitch Grid.Column="2" VerticalAlignment="Bottom" IsChecked="{Binding SelectedTimetable.UseCurrentGenerationTime}"
+                          OnContent="Data i godzina – bieżące" OffContent="Data i godzina – stałe" />
+          </Grid>
+          <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding !SelectedTimetable.UseCurrentGenerationTime}">
+            <HeaderedContentControl Classes="field" Header="Data wygenerowania">
+              <TextBox Text="{Binding SelectedTimetable.GenerationDate}" Watermark="dd.mm.rrrr" />
+            </HeaderedContentControl>
+            <HeaderedContentControl Grid.Column="2" Classes="field" Header="Godzina wygenerowania">
+              <TextBox Text="{Binding SelectedTimetable.GenerationTime}" Watermark="gg:mm:ss" />
+            </HeaderedContentControl>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- ============================================ informacja dla maszynisty -->
+      <Border Classes="card">
+        <StackPanel Spacing="14">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <mi:MaterialIcon Kind="ShieldAlertOutline" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+              <TextBlock Classes="title-medium" Text="Stopka – informacja dla maszynisty" VerticalAlignment="Center" />
+            </StackPanel>
+            <Button Grid.Column="1" Classes="small" Command="{Binding ResetDriverMessageCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="Restore" /><TextBlock Text="Przywróć wzór" /></StackPanel>
+            </Button>
+          </Grid>
+          <TextBox Classes="multiline" Text="{Binding SelectedTimetable.DriverMessage}" MinHeight="160" />
+          <CheckBox IsChecked="{Binding SelectedTimetable.UnderlineLastMessageLine}" Content="Podkreśl ostatni wiersz („Bezpieczeństwo jest najważniejsze.”)" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
