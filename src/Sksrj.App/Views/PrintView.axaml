@@ -1,3 +1,17 @@
+<!--
+  SKSRJ Timetable generator
+  Copyright (C) 2026 Oskar Jagodziński
+
+  This program is free software: you can redistribute it and/or modify it under the terms of
+  the GNU General Public License as published by the Free Software Foundation, either version 3
+  of the License, or (at your option) any later version, together with the additional terms
+  under Section 7 of that License (see the files LICENSE and ADDITIONAL_TERMS).
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+  Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+  Original source: https://github.com/Hirek193/sksrj
+-->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Sksrj.App.ViewModels"
@@ -41,6 +55,7 @@
           </StackPanel>
           <ToggleSwitch IsChecked="{Binding Project.Print.SimulationNote}" OnContent="Drukuj dopisek w stopce każdej strony" OffContent="Bez dopisku (wygląd 1:1 z instrukcją)" />
           <TextBox Text="{Binding Project.Print.SimulationNoteText}" IsEnabled="{Binding Project.Print.SimulationNote}" />
+          <ToggleSwitch IsChecked="{Binding Project.Print.IncludeRestrictionList}" OnContent="Dołączaj stronę „Wykaz ostrzeżeń na trasie pociągu”" OffContent="Bez wykazu ostrzeżeń" />
         </StackPanel>
       </Border>
 
@@ -99,8 +114,13 @@
       </Border>
 
       <Border Classes="info">
-        <TextBlock TextWrapping="Wrap" FontSize="12"
-                   Text="SKSRJ – System konstrukcji symulacyjnych rozkładów jazdy. Wygląd kart wzorowany na Instrukcji o rozkładzie jazdy pociągów Ir-11 (PKP PLK S.A., 2021). Program służy do tworzenia rozkładów na potrzeby symulatorów (np. MaSzyna), także dla tras fikcyjnych. Czcionka kart: Liberation Serif (SIL OFL 1.1)." />
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Spacing="4">
+            <TextBlock Text="SKSRJ Timetable generator – Copyright © 2026 Oskar Jagodziński" FontWeight="SemiBold" FontSize="13" />
+            <TextBlock TextWrapping="Wrap" FontSize="12" Text="Licencja GNU GPL v3 lub nowsza z warunkami dodatkowymi. Program symulacyjny – nie jest powiązany z PKP PLK S.A.; wygląd kart wzorowany na instrukcji Ir-11. Czcionki kart: Liberation Serif / Sans (SIL OFL 1.1)." />
+          </StackPanel>
+          <Button Grid.Column="1" Classes="small" VerticalAlignment="Center" Margin="12,0,0,0" Command="{Binding ShowAboutCommand}" Content="O programie" />
+        </Grid>
       </Border>
     </StackPanel>
   </ScrollViewer>

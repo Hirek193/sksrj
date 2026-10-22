@@ -1,3 +1,17 @@
+<!--
+  SKSRJ Timetable generator
+  Copyright (C) 2026 Oskar Jagodziński
+
+  This program is free software: you can redistribute it and/or modify it under the terms of
+  the GNU General Public License as published by the Free Software Foundation, either version 3
+  of the License, or (at your option) any later version, together with the additional terms
+  under Section 7 of that License (see the files LICENSE and ADDITIONAL_TERMS).
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+  Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+  Original source: https://github.com/Hirek193/sksrj
+-->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -12,7 +26,7 @@
         x:DataType="vm:MainViewModel"
         Title="{Binding WindowTitle}"
         Icon="avares://SKSRJ/Assets/sksrj.png"
-        Width="1560" Height="940" MinWidth="1080" MinHeight="640"
+        Width="1600" Height="960" MinWidth="1180" MinHeight="640"
         WindowStartupLocation="CenterScreen">
 
   <Window.KeyBindings>
@@ -32,8 +46,8 @@
         <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center" Margin="16,0,24,0">
           <Image Source="avares://SKSRJ/Assets/sksrj.png" Width="36" Height="36" />
           <StackPanel VerticalAlignment="Center">
-            <TextBlock Text="SKSRJ" FontSize="18" FontWeight="SemiBold" />
-            <TextBlock Classes="body-small" Text="System konstrukcji symulacyjnych rozkładów jazdy" />
+            <TextBlock Text="SKSRJ Timetable generator" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock Classes="body-small" Text="Generator symulacyjnych kart rozkładu jazdy" />
           </StackPanel>
         </StackPanel>
 
@@ -63,6 +77,7 @@
           <Button Classes="icon" Command="{Binding SaveAsCommand}" ToolTip.Tip="Zapisz jako… (Ctrl+Shift+S)"><mi:MaterialIcon Kind="ContentSaveEditOutline" /></Button>
           <Border Width="1" Height="24" Background="{DynamicResource Md.OutlineVariant}" Margin="8,0" />
           <Button Classes="icon" Command="{Binding ToggleThemeCommand}" ToolTip.Tip="Motyw jasny / ciemny"><mi:MaterialIcon Kind="ThemeLightDark" /></Button>
+          <Button Classes="icon" Command="{Binding ShowAboutCommand}" ToolTip.Tip="O programie, licencja i autorzy"><mi:MaterialIcon Kind="InformationOutline" /></Button>
           <Button Classes="icon" Command="{Binding TogglePreviewCommand}" ToolTip.Tip="Pokaż / ukryj podgląd"><mi:MaterialIcon Kind="DockRight" /></Button>
           <Button Classes="outlined" Command="{Binding ExportAllPdfCommand}" Margin="8,0,0,0" ToolTip.Tip="Wszystkie karty projektu w jednym pliku PDF">
             <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="FileMultipleOutline" /><TextBlock Text="Wszystkie" /></StackPanel>
@@ -95,12 +110,15 @@
       <!-- edytor -->
       <Border Grid.Column="1" Background="{DynamicResource Md.Surface}" CornerRadius="24,24,0,0">
         <Panel>
+          <v:SchemeView IsVisible="{Binding IsSchemePage}" />
           <v:TrainView IsVisible="{Binding IsTrainPage}" />
           <v:RouteView IsVisible="{Binding IsRoutePage}" />
           <v:PointsView IsVisible="{Binding IsPointsPage}" />
+          <v:RunTimeView IsVisible="{Binding IsRunPage}" />
+          <v:RestrictionsView IsVisible="{Binding IsRestrictionsPage}" />
           <v:NotesView IsVisible="{Binding IsNotesPage}" />
           <v:PrintView IsVisible="{Binding IsPrintPage}" />
-          <StackPanel IsVisible="{Binding !HasTimetable}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+          <StackPanel IsVisible="{Binding ShowNoTimetable}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
             <mi:MaterialIcon Kind="CardTextOutline" Width="56" Height="56" Foreground="{DynamicResource Md.OnSurfaceVariant}" />
             <TextBlock Classes="title-medium" Text="Projekt nie zawiera żadnej karty" HorizontalAlignment="Center" />
             <Button Classes="filled" Command="{Binding AddTimetableCommand}" HorizontalAlignment="Center">
@@ -110,10 +128,15 @@
         </Panel>
       </Border>
 
-      <GridSplitter Grid.Column="2" x:Name="Splitter" ResizeDirection="Columns" Width="8" IsVisible="{Binding PreviewVisible}" />
+      <GridSplitter Grid.Column="2" x:Name="Splitter" ResizeDirection="Columns" Width="8" />
+
+      <!-- inspektor schematu -->
+      <Border Grid.Column="3" Classes="pane" Background="{DynamicResource Md.SurfaceContainerLow}" IsVisible="{Binding IsSchemePage}">
+        <v:SchemeInspector />
+      </Border>
 
       <!-- podgląd -->
-      <Border Grid.Column="3" x:Name="PreviewPane" Classes="pane" Background="{DynamicResource Md.PreviewBackdrop}" IsVisible="{Binding PreviewVisible}" Margin="0,0,0,0">
+      <Border Grid.Column="3" x:Name="PreviewPane" Classes="pane" Background="{DynamicResource Md.PreviewBackdrop}" IsVisible="{Binding ShowPreviewPane}" Margin="0,0,0,0">
         <Grid RowDefinitions="Auto,*,Auto">
           <Border Background="{DynamicResource Md.SurfaceContainerHigh}" CornerRadius="24,24,0,0" Padding="20,10,10,10">
             <Grid ColumnDefinitions="*,Auto">

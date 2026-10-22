@@ -1,0 +1,148 @@
+<!--
+  SKSRJ Timetable generator
+  Copyright (C) 2026 Oskar Jagodziński
+
+  This program is free software: you can redistribute it and/or modify it under the terms of
+  the GNU General Public License as published by the Free Software Foundation, either version 3
+  of the License, or (at your option) any later version, together with the additional terms
+  under Section 7 of that License (see the files LICENSE and ADDITIONAL_TERMS).
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+  Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+  Original source: https://github.com/Hirek193/sksrj
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sksrj.App.ViewModels"
+             xmlns:m="using:Sksrj.Core.Model"
+             xmlns:c="using:Sksrj.App.Controls"
+             xmlns:mi="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Sksrj.App.Views.SchemeView"
+             x:DataType="vm:MainViewModel">
+  <Grid RowDefinitions="Auto,*,Auto">
+    <!-- pasek narzędzi -->
+    <Border Padding="20,14,16,10">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <RadioButton Classes="chip" GroupName="tool" IsChecked="{Binding IsToolSelect}" ToolTip.Tip="Zaznacz / przesuń (V)">
+            <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="CursorDefaultOutline" /><TextBlock Text="Zaznacz" /></StackPanel>
+          </RadioButton>
+          <RadioButton Classes="chip" GroupName="tool" IsChecked="{Binding IsToolAddNode}" ToolTip.Tip="Dodaj posterunek (N)">
+            <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="MapMarkerPlusOutline" /><TextBlock Text="Posterunek" /></StackPanel>
+          </RadioButton>
+          <RadioButton Classes="chip" GroupName="tool" IsChecked="{Binding IsToolConnect}" ToolTip.Tip="Rysuj linię – łącz posterunki (C)">
+            <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="VectorPolyline" /><TextBlock Text="Połącz" /></StackPanel>
+          </RadioButton>
+          <RadioButton Classes="chip" GroupName="tool" IsChecked="{Binding IsToolRoute}" ToolTip.Tip="Ułóż trasę pociągu (T)">
+            <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="MapMarkerPath" /><TextBlock Text="Trasa pociągu" /></StackPanel>
+          </RadioButton>
+          <RadioButton Classes="chip" GroupName="tool" IsChecked="{Binding IsToolDelete}" ToolTip.Tip="Usuń posterunek lub odcinek">
+            <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="Eraser" /><TextBlock Text="Usuń" /></StackPanel>
+          </RadioButton>
+          <Border Width="1" Height="24" Background="{DynamicResource Md.OutlineVariant}" Margin="6,0" />
+          <TextBlock Classes="label" Text="Linia:" VerticalAlignment="Center" />
+          <ComboBox ItemsSource="{Binding Project.Scenery.Lines}" SelectedItem="{Binding CurrentLine}" Width="250" ToolTip.Tip="Linia dla nowo rysowanych odcinków">
+            <ComboBox.ItemTemplate>
+              <DataTemplate x:DataType="m:SceneryLine">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <Border Width="22" Height="6" CornerRadius="3" Background="{Binding Color, Converter={StaticResource HexBrush}}" VerticalAlignment="Center" />
+                  <TextBlock Text="{Binding Display}" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+          <Button Classes="icon" Command="{Binding AddLineCommand}" ToolTip.Tip="Nowa linia"><mi:MaterialIcon Kind="Plus" /></Button>
+        </StackPanel>
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+          <Button Classes="icon" Command="{Binding ToggleSchemeThemeCommand}" ToolTip.Tip="Schemat: tryb jasny / ciemny">
+            <Panel>
+              <mi:MaterialIcon Kind="WeatherNight" IsVisible="{Binding !SchemeDark}" />
+              <mi:MaterialIcon Kind="WhiteBalanceSunny" IsVisible="{Binding SchemeDark}" />
+            </Panel>
+          </Button>
+          <Button Classes="icon" Command="{Binding FitSchemeCommand}" ToolTip.Tip="Dopasuj widok (F)"><mi:MaterialIcon Kind="FitToScreenOutline" /></Button>
+          <Button Classes="icon" Command="{Binding ExportSchemePdfCommand}" ToolTip.Tip="Eksport schematu do PDF"><mi:MaterialIcon Kind="FilePdfBox" /></Button>
+          <Button Classes="icon" ToolTip.Tip="Więcej">
+            <mi:MaterialIcon Kind="DotsVertical" />
+            <Button.Flyout>
+              <MenuFlyout Placement="BottomEdgeAlignedRight">
+                <MenuItem Header="Nowy (pusty) schemat" Command="{Binding NewSceneryCommand}" />
+                <MenuItem Header="Wczytaj schemat przykładowy" Command="{Binding LoadSampleSceneryCommand}" />
+              </MenuFlyout>
+            </Button.Flyout>
+          </Button>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- płótno -->
+    <Border Grid.Row="1" Margin="16,0,16,0" CornerRadius="16" ClipToBounds="True" BorderBrush="{DynamicResource Md.OutlineVariant}" BorderThickness="1">
+      <Panel>
+        <c:SchematicCanvas x:Name="Canvas" />
+
+        <!-- panel trasy pociągu -->
+        <Border Classes="card" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="14" MaxWidth="560" Padding="16,12,16,14"
+                Background="{DynamicResource Md.SurfaceContainerHigh}" BoxShadow="0 2 8 0 #33000000" IsVisible="{Binding IsToolRoute}">
+          <StackPanel Spacing="10">
+            <Grid ColumnDefinitions="Auto,*">
+              <mi:MaterialIcon Kind="MapMarkerPath" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" Margin="0,0,10,0" />
+              <StackPanel Grid.Column="1">
+                <TextBlock Classes="title-small" Text="{Binding SelectedTimetable.DisplayName, StringFormat='Trasa pociągu {0}'}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Classes="body-small" Text="{Binding RouteSummary}" TextWrapping="Wrap" />
+              </StackPanel>
+            </Grid>
+            <ItemsControl ItemsSource="{Binding WaypointItems}">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:WaypointItem">
+                  <Border Background="{DynamicResource Md.SecondaryContainer}" CornerRadius="8" Padding="4,2,2,2" Margin="0,0,6,6">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                      <Border Background="{DynamicResource Md.Primary}" CornerRadius="9" Width="18" Height="18">
+                        <TextBlock Text="{Binding Number}" Foreground="{DynamicResource Md.OnPrimary}" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
+                      <TextBlock Text="{Binding Name}" FontSize="12" VerticalAlignment="Center" Foreground="{DynamicResource Md.OnSecondaryContainer}" />
+                      <Button Classes="icon small" Width="24" Height="24" MinHeight="24" Padding="0"
+                              Command="{ReflectionBinding $parent[UserControl].DataContext.RemoveWaypointAtCommand}" CommandParameter="{Binding}">
+                        <mi:MaterialIcon Kind="Close" Width="14" Height="14" />
+                      </Button>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Grid ColumnDefinitions="Auto,8,*">
+              <TextBlock Classes="label" Text="Postoje:" VerticalAlignment="Center" />
+              <ComboBox Grid.Column="2" SelectedIndex="{Binding SelectedTimetable.Route.StopPolicy, Converter={StaticResource EnumIndex}}">
+                <ComboBoxItem Content="na wszystkich posterunkach z obsługą podróżnych (osobowy)" />
+                <ComboBoxItem Content="tylko na stacjach z obsługą podróżnych (przyspieszony)" />
+                <ComboBoxItem Content="tylko na punktach trasy wskazanych na schemacie" />
+                <ComboBoxItem Content="bez postojów pośrednich (towarowy, luzem)" />
+              </ComboBox>
+            </Grid>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Classes="filled" Command="{Binding ApplyRouteCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="CheckBold" /><TextBlock Text="Ułóż trasę w karcie" /></StackPanel>
+              </Button>
+              <Button Classes="outlined" Command="{Binding ReverseRouteCommand}" ToolTip.Tip="Odwróć kierunek">
+                <mi:MaterialIcon Kind="SwapHorizontal" />
+              </Button>
+              <Button Command="{Binding ClearRouteCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="Close" /><TextBlock Text="Wyczyść" /></StackPanel>
+              </Button>
+            </StackPanel>
+            <TextBlock Classes="body-small" TextWrapping="Wrap" Text="Postoje, godziny i szczegóły zmienisz później w zakładce Posterunki – ułożenie trasy oblicza od razu czasy jazdy wg Ir-11 § 21." />
+          </StackPanel>
+        </Border>
+      </Panel>
+    </Border>
+
+    <!-- podpowiedź -->
+    <Border Grid.Row="2" Padding="20,8,20,12">
+      <Grid ColumnDefinitions="Auto,*">
+        <mi:MaterialIcon Kind="LightbulbOnOutline" Width="18" Height="18" Foreground="{DynamicResource Md.OnSurfaceVariant}" Margin="0,0,8,0" VerticalAlignment="Top" />
+        <TextBlock Grid.Column="1" Classes="body-small" TextWrapping="Wrap" Text="{Binding ToolHint}" />
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

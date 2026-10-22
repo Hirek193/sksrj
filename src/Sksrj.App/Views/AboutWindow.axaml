@@ -1,0 +1,54 @@
+<!--
+  SKSRJ Timetable generator
+  Copyright (C) 2026 Oskar Jagodziński
+
+  This program is free software: you can redistribute it and/or modify it under the terms of
+  the GNU General Public License as published by the Free Software Foundation, either version 3
+  of the License, or (at your option) any later version, together with the additional terms
+  under Section 7 of that License (see the files LICENSE and ADDITIONAL_TERMS).
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+  Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+  Original source: https://github.com/Hirek193/sksrj
+-->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mi="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        x:Class="Sksrj.App.Views.AboutWindow"
+        Width="760" Height="680" MinWidth="560" MinHeight="480"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource Md.SurfaceContainerLow}"
+        Title="O programie – SKSRJ Timetable generator"
+        Icon="avares://SKSRJ/Assets/sksrj.png">
+  <Grid RowDefinitions="Auto,*,Auto" Margin="24">
+    <Grid ColumnDefinitions="Auto,*">
+      <Image Source="avares://SKSRJ/Assets/sksrj.png" Width="72" Height="72" VerticalAlignment="Top" Margin="0,0,18,0" />
+      <StackPanel Grid.Column="1" Spacing="3">
+        <TextBlock x:Name="NameText" Classes="headline" />
+        <TextBlock x:Name="TaglineText" Classes="body-small" />
+        <TextBlock x:Name="CopyrightText" FontWeight="SemiBold" Margin="0,8,0,0" />
+        <TextBlock x:Name="AttributionText" TextWrapping="Wrap" FontSize="13" />
+        <TextBlock x:Name="LicenseText" TextWrapping="Wrap" FontSize="13" Classes="muted" />
+        <TextBlock x:Name="DisclaimerText" TextWrapping="Wrap" FontSize="12" Classes="muted" Margin="0,4,0,0" />
+      </StackPanel>
+    </Grid>
+    <TabControl Grid.Row="1" Margin="0,16,0,0">
+      <TabItem Header="Licencja (GPL v3)">
+        <TextBox x:Name="LicenseBox" Classes="mono" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" FontSize="12" VerticalContentAlignment="Top" />
+      </TabItem>
+      <TabItem Header="Warunki dodatkowe">
+        <TextBox x:Name="TermsBox" Classes="mono" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" FontSize="12" VerticalContentAlignment="Top" />
+      </TabItem>
+      <TabItem Header="Komponenty zewnętrzne">
+        <TextBox x:Name="NoticesBox" Classes="mono" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" FontSize="12" VerticalContentAlignment="Top" />
+      </TabItem>
+    </TabControl>
+    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,16,0,0">
+      <Button x:Name="SourceButton" Classes="outlined" Click="OnSource">
+        <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="Github" /><TextBlock Text="Kod źródłowy" /></StackPanel>
+      </Button>
+      <Button Classes="filled" Content="Zamknij" Click="OnClose" />
+    </StackPanel>
+  </Grid>
+</Window>

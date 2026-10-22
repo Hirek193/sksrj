@@ -1,3 +1,16 @@
+// SKSRJ Timetable generator
+// Copyright (C) 2026 Oskar Jagodziński
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of
+// the GNU General Public License as published by the Free Software Foundation, either version 3
+// of the License, or (at your option) any later version, together with the additional terms
+// under Section 7 of that License (see the files LICENSE and ADDITIONAL_TERMS).
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+// without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+// Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+// Original source: https://github.com/Hirek193/sksrj
+
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -12,6 +25,12 @@ public partial class TimetableProject : ObservableObject
     [ObservableProperty] private PrintSettings _print = new();
 
     public ObservableCollection<Timetable> Timetables { get; set; } = new();
+
+    /// <summary>Plan schematyczny scenerii, na którym układane są trasy pociągów.</summary>
+    [ObservableProperty] private Scenery _scenery = new();
+
+    /// <summary>Wykaz ostrzeżeń stałych i doraźnych (wspólny dla wszystkich pociągów projektu).</summary>
+    public ObservableCollection<SpeedRestriction> Restrictions { get; set; } = new();
 }
 
 public enum PageLayoutKind
@@ -28,6 +47,8 @@ public partial class PrintSettings : ObservableObject
     /// <summary>Drobny dopisek „rozkład symulacyjny” w stopce stron (domyślnie wyłączony, by zachować wygląd 1:1).</summary>
     [ObservableProperty] private bool _simulationNote;
     [ObservableProperty] private string _simulationNoteText = "Rozkład symulacyjny – wyłącznie do użytku w symulatorze";
+    /// <summary>Dołącz do karty stronę z wykazem ostrzeżeń na trasie pociągu.</summary>
+    [ObservableProperty] private bool _includeRestrictionList = true;
 }
 
 public enum TrackSide
@@ -61,7 +82,7 @@ public partial class Timetable : ObservableObject
     [ObservableProperty] private string _headerOverride = "";
 
     // ---- strona tytułowa --------------------------------------------------------------
-    [ObservableProperty] private string _issuer = "PKP POLSKIE LINIE KOLEJOWE S.A.\nCENTRUM ZARZĄDZANIA RUCHEM KOLEJOWYM\nW WARSZAWIE";
+    [ObservableProperty] private string _issuer = DefaultIssuer;
     [ObservableProperty] private string _timetableKind = "ROCZNY ROZKŁAD JAZDY";
     [ObservableProperty] private string _carrier = "";
     [ObservableProperty] private string _applicationNumber = "";
@@ -82,6 +103,16 @@ public partial class Timetable : ObservableObject
     public ObservableCollection<Footnote> Footnotes { get; set; } = new();
     public ObservableCollection<LineSection> Sections { get; set; } = new();
     public ObservableCollection<RoutePoint> Points { get; set; } = new();
+
+    /// <summary>Trasa ułożona na schemacie scenerii.</summary>
+    [ObservableProperty] private SceneryRoute _route = new();
+    /// <summary>Parametry obliczeń trakcyjnych.</summary>
+    [ObservableProperty] private RunCalcSettings _runCalc = new();
+    /// <summary>Odcinki linii były ręcznie zmieniane po wygenerowaniu ze schematu.</summary>
+    [ObservableProperty] private bool _manualSections;
+
+    /// <summary>Domyślny wydawca karty (nagłówek strony tytułowej).</summary>
+    public const string DefaultIssuer = "FLK Fikcyjne Linie Kolejowe S.F.";
 
     public const string DefaultDriverMessage =
         "Maszynisto!\n" +
@@ -190,6 +221,13 @@ public partial class RoutePoint : ObservableObject
     [ObservableProperty] private string _vmax = "";
     [ObservableProperty] private string _brakePercent = "";
     [ObservableProperty] private string _brakeType = "";
+
+    /// <summary>Posterunek schematu, z którego pochodzi punkt (puste = punkt dodany ręcznie).</summary>
+    [ObservableProperty] private string _nodeId = "";
+    /// <summary>Dane infrastruktury (nazwa, km, skróty, uwagi) zmieniono ręcznie – nie nadpisuj przy ponownym ułożeniu trasy.</summary>
+    [ObservableProperty] private bool _manualInfra;
+    /// <summary>Postój (postój, rodzaj postoju, czas postoju) zmieniono ręcznie – nie nadpisuj zasadą postojów trasy.</summary>
+    [ObservableProperty] private bool _manualStop;
 
     [JsonIgnore]
     public string ListTitle => string.IsNullOrWhiteSpace(Name) ? "(bez nazwy)" : (Uppercase ? Name.ToUpperInvariant() : Name) + (string.IsNullOrWhiteSpace(TypeSuffix) ? "" : " " + TypeSuffix);

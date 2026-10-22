@@ -1,0 +1,358 @@
+<!--
+  SKSRJ Timetable generator
+  Copyright (C) 2026 Oskar Jagodziński
+
+  This program is free software: you can redistribute it and/or modify it under the terms of
+  the GNU General Public License as published by the Free Software Foundation, either version 3
+  of the License, or (at your option) any later version, together with the additional terms
+  under Section 7 of that License (see the files LICENSE and ADDITIONAL_TERMS).
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+  Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+  Original source: https://github.com/Hirek193/sksrj
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sksrj.App.ViewModels"
+             xmlns:m="using:Sksrj.Core.Model"
+             xmlns:dict="using:Sksrj.Core.Dictionaries"
+             xmlns:mi="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Sksrj.App.Views.SchemeInspector"
+             x:DataType="vm:MainViewModel">
+  <Grid RowDefinitions="Auto,*">
+    <Border Background="{DynamicResource Md.SurfaceContainerHigh}" CornerRadius="24,24,0,0" Padding="20,14,12,12">
+      <StackPanel Orientation="Horizontal" Spacing="10">
+        <mi:MaterialIcon Kind="TuneVariant" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+        <TextBlock Classes="title-medium" Text="Inspektor" VerticalAlignment="Center" />
+      </StackPanel>
+    </Border>
+    <ScrollViewer Grid.Row="1">
+      <StackPanel Margin="16,12,16,32" Spacing="14">
+
+        <!-- ==================================================== posterunek -->
+        <Panel IsVisible="{Binding HasSelectedNode}">
+        <StackPanel Spacing="14" DataContext="{Binding SelectedNode}" x:DataType="m:SceneryNode">
+          <Border Classes="card" Background="{DynamicResource Md.Surface}">
+            <StackPanel Spacing="12">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel>
+                  <TextBlock Classes="label" Text="POSTERUNEK" />
+                  <TextBlock Classes="title-large" Text="{Binding Name}" TextWrapping="Wrap" />
+                </StackPanel>
+                <Button Grid.Column="1" Classes="icon danger" VerticalAlignment="Top" ToolTip.Tip="Usuń posterunek (Delete)"
+                        Command="{ReflectionBinding $parent[UserControl].DataContext.DeleteSelectionCommand}"><mi:MaterialIcon Kind="DeleteOutline" /></Button>
+              </Grid>
+              <HeaderedContentControl Classes="field" Header="Nazwa (do karty rozkładu)">
+                <TextBox Text="{Binding Name}" FontWeight="SemiBold" />
+              </HeaderedContentControl>
+              <Grid ColumnDefinitions="*,10,*">
+                <HeaderedContentControl Classes="field" Header="Symbol">
+                  <ComboBox SelectedIndex="{Binding Kind, Converter={StaticResource EnumIndex}}">
+                    <ComboBoxItem Content="stacja (kółko)" />
+                    <ComboBoxItem Content="przystanek / posterunek (kreska)" />
+                    <ComboBoxItem Content="zamknięty (przekreślony)" />
+                    <ComboBoxItem Content="koniec linii / załamanie" />
+                  </ComboBox>
+                </HeaderedContentControl>
+                <HeaderedContentControl Grid.Column="2" Classes="field" Header="Opis na schemacie">
+                  <ComboBox SelectedIndex="{Binding LabelSide, Converter={StaticResource EnumIndex}}">
+                    <ComboBoxItem Content="nad" /><ComboBoxItem Content="pod" /><ComboBoxItem Content="z lewej" /><ComboBoxItem Content="z prawej" />
+                  </ComboBox>
+                </HeaderedContentControl>
+              </Grid>
+              <HeaderedContentControl Classes="field" Header="Własny opis na schemacie (Enter = nowy wiersz)">
+                <TextBox Classes="multiline" MinHeight="52" Text="{Binding Label}" Watermark="puste = nazwa + rodzaj posterunku" />
+              </HeaderedContentControl>
+              <WrapPanel>
+                <CheckBox IsChecked="{Binding Passenger}" Content="obsługa podróżnych" Margin="0,0,16,4" />
+                <CheckBox IsChecked="{Binding Technical}" Content="techniczny ⌘" Margin="0,0,16,4" />
+                <CheckBox IsChecked="{Binding Airport}" Content="lotnisko" />
+              </WrapPanel>
+            </StackPanel>
+          </Border>
+
+          <Border Classes="card" Background="{DynamicResource Md.Surface}">
+            <StackPanel Spacing="12">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <mi:MaterialIcon Kind="CardTextOutline" Width="20" Height="20" Foreground="{DynamicResource Md.Primary}" />
+                <TextBlock Classes="title-small" Text="Dane do karty rozkładu (kol. 5)" VerticalAlignment="Center" />
+              </StackPanel>
+              <WrapPanel>
+                <CheckBox IsChecked="{Binding Bold}" Content="stacja – pogrubienie" Margin="0,0,16,4" />
+                <CheckBox IsChecked="{Binding Uppercase}" Content="węzłowa – WERSALIKI" />
+              </WrapPanel>
+              <Grid ColumnDefinitions="*,10,*">
+                <HeaderedContentControl Classes="field" Header="Rodzaj (po nazwie)">
+                  <AutoCompleteBox Text="{Binding TypeSuffix}" ItemsSource="{x:Static dict:Ir11.PointTypes}" FilterMode="StartsWithOrdinal" MinimumPrefixLength="0"
+                                   ValueMemberBinding="{Binding Code, x:DataType=dict:CodeEntry}" Watermark="puste = po (przystanek)">
+                    <AutoCompleteBox.ItemTemplate>
+                      <DataTemplate x:DataType="dict:CodeEntry">
+                        <StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Text="{Binding Code}" FontWeight="SemiBold" Width="40" /><TextBlock Text="{Binding Description}" FontSize="12" Classes="muted" /></StackPanel>
+                      </DataTemplate>
+                    </AutoCompleteBox.ItemTemplate>
+                  </AutoCompleteBox>
+                </HeaderedContentControl>
+                <HeaderedContentControl Grid.Column="2" Classes="field" Header="Postój osobowych">
+                  <TextBox Text="{Binding DefaultStopKinds}" Watermark="ph" />
+                </HeaderedContentControl>
+              </Grid>
+              <HeaderedContentControl Classes="field" Header="Skróty i znaki (R1, H, ZSM…; Enter = wiersz wyżej)">
+                <TextBox Classes="multiline" MinHeight="52" Text="{Binding Abbreviations}" />
+              </HeaderedContentControl>
+              <Grid ColumnDefinitions="*,10,*">
+                <HeaderedContentControl Classes="field" Header="Postój [min] (puste = § 22)">
+                  <TextBox Text="{Binding DefaultDwell}" />
+                </HeaderedContentControl>
+                <HeaderedContentControl Grid.Column="2" Classes="field" Header="Czynny w godz.">
+                  <TextBox Text="{Binding OpeningHours}" Watermark="np. (6-18)" />
+                </HeaderedContentControl>
+              </Grid>
+              <TextBlock Classes="body-small" TextWrapping="Wrap" Text="Kilometraż posterunku wynika z odcinków (kilometr przy końcu odcinka) – zaznacz odcinek, by go zmienić. Rodzaj blokady odcinka dopisywany jest do skrótów posterunku ruchu." />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="card" Background="{DynamicResource Md.Surface}">
+            <StackPanel Spacing="10">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <mi:MaterialIcon Kind="SpeedometerSlow" Width="20" Height="20" Foreground="{DynamicResource Md.Primary}" />
+                <TextBlock Classes="title-small" Text="Ograniczenia prędkości na posterunku" VerticalAlignment="Center" />
+              </StackPanel>
+              <TextBlock Classes="body-small" TextWrapping="Wrap" Text="{ReflectionBinding $parent[UserControl].DataContext.SelectedNodeLines}" />
+              <ItemsControl ItemsSource="{Binding SpeedLimits}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="8" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="m:NodeSpeedLimit">
+                    <Border Background="{DynamicResource Md.SurfaceContainerLow}" CornerRadius="12" Padding="10,8,10,10">
+                      <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                          <CheckBox IsChecked="{Binding Active}" ToolTip.Tip="Ograniczenie obowiązuje" MinWidth="0" Padding="0" />
+                          <TextBox Grid.Column="1" Classes="cell" Text="{Binding Reason}" Watermark="powód, np. geometria głowicy" Margin="4,0,4,0" />
+                          <Button Grid.Column="2" Classes="icon small" ToolTip.Tip="Usuń ograniczenie"
+                                  Command="{ReflectionBinding $parent[UserControl].DataContext.RemoveNodeLimitCommand}" CommandParameter="{Binding}">
+                            <mi:MaterialIcon Kind="Close" />
+                          </Button>
+                        </Grid>
+                        <Grid ColumnDefinitions="56,6,*,6,*,6,52">
+                          <HeaderedContentControl Classes="field" Header="Linia"><TextBox Classes="cell" MinWidth="0" Text="{Binding Line}" /></HeaderedContentControl>
+                          <HeaderedContentControl Grid.Column="2" Classes="field" Header="Km od"><TextBox Classes="cell" MinWidth="0" Text="{Binding KmFrom}" /></HeaderedContentControl>
+                          <HeaderedContentControl Grid.Column="4" Classes="field" Header="Km do"><TextBox Classes="cell" MinWidth="0" Text="{Binding KmTo}" /></HeaderedContentControl>
+                          <HeaderedContentControl Grid.Column="6" Classes="field" Header="V"><TextBox Classes="cell" MinWidth="0" Text="{Binding Speed}" FontWeight="SemiBold" /></HeaderedContentControl>
+                        </Grid>
+                        <Grid ColumnDefinitions="*,6,*">
+                          <HeaderedContentControl Classes="field" Header="Tor">
+                            <ComboBox Classes="cell" SelectedIndex="{Binding Track, Converter={StaticResource EnumIndex}}" HorizontalAlignment="Stretch">
+                              <ComboBoxItem Content="oba tory" /><ComboBoxItem Content="tor nr 1" /><ComboBoxItem Content="tor nr 2" />
+                            </ComboBox>
+                          </HeaderedContentControl>
+                          <HeaderedContentControl Grid.Column="2" Classes="field" Header="W karcie jako">
+                            <ComboBox Classes="cell" SelectedIndex="{Binding Mode, Converter={StaticResource EnumIndex}}" HorizontalAlignment="Stretch">
+                              <ComboBoxItem Content="kol. 3–4 karty" /><ComboBoxItem Content="ostrz. stałe" />
+                            </ComboBox>
+                          </HeaderedContentControl>
+                        </Grid>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <Button Classes="small" HorizontalAlignment="Left" Command="{ReflectionBinding $parent[UserControl].DataContext.AddNodeLimitCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="Plus" /><TextBlock Text="Dodaj ograniczenie" /></StackPanel>
+              </Button>
+              <TextBlock Classes="body-small" TextWrapping="Wrap" Text="Kol. 3–4 karty: obniża prędkość dopuszczalną w zakresie km dla pociągów jadących przez posterunek – uwzględniane przy układaniu trasy. Wykaz ostrzeżeń: pozycja wykazu ostrzeżeń stałych i czasów jazdy. Tor nr 1 = prawy w kierunku rosnącego km." />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="card" Background="{DynamicResource Md.Surface}">
+            <StackPanel Spacing="12">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <mi:MaterialIcon Kind="InformationOutline" Width="20" Height="20" Foreground="{DynamicResource Md.Primary}" />
+                <TextBlock Classes="title-small" Text="Informacje dodatkowe" VerticalAlignment="Center" />
+              </StackPanel>
+              <Grid ColumnDefinitions="*,10,*">
+                <HeaderedContentControl Classes="field" Header="Perony"><TextBox Text="{Binding Platforms}" /></HeaderedContentControl>
+                <HeaderedContentControl Grid.Column="2" Classes="field" Header="Tory stacyjne"><TextBox Text="{Binding StationTracks}" /></HeaderedContentControl>
+              </Grid>
+              <HeaderedContentControl Classes="field" Header="Notatki">
+                <TextBox Classes="multiline" Text="{Binding Notes}" />
+              </HeaderedContentControl>
+              <Grid ColumnDefinitions="*,10,*">
+                <HeaderedContentControl Classes="field" Header="X"><TextBox Text="{Binding X}" /></HeaderedContentControl>
+                <HeaderedContentControl Grid.Column="2" Classes="field" Header="Y"><TextBox Text="{Binding Y}" /></HeaderedContentControl>
+              </Grid>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+        </Panel>
+
+        <!-- ==================================================== odcinek -->
+        <StackPanel Spacing="14" IsVisible="{Binding HasSelectedEdge}">
+          <Border Classes="card" Background="{DynamicResource Md.Surface}">
+            <StackPanel Spacing="12">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel>
+                  <TextBlock Classes="label" Text="ODCINEK LINII" />
+                  <TextBlock Classes="title-large" Text="{Binding SelectedEdgeLine.Display}" TextWrapping="Wrap" />
+                </StackPanel>
+                <Button Grid.Column="1" Classes="icon danger" VerticalAlignment="Top" Command="{Binding DeleteSelectionCommand}" ToolTip.Tip="Usuń odcinek"><mi:MaterialIcon Kind="DeleteOutline" /></Button>
+              </Grid>
+              <HeaderedContentControl Classes="field" Header="Linia kolejowa">
+                <ComboBox ItemsSource="{Binding Project.Scenery.Lines}" SelectedItem="{Binding SelectedEdgeLine}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="m:SceneryLine">
+                      <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Border Width="22" Height="6" CornerRadius="3" Background="{Binding Color, Converter={StaticResource HexBrush}}" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding Display}" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+              </HeaderedContentControl>
+              <Grid ColumnDefinitions="*,10,*" DataContext="{Binding SelectedEdge}" x:DataType="m:SceneryEdge">
+                <HeaderedContentControl Classes="field" Header="Km przy początku (A)"><TextBox Text="{Binding KmA}" /></HeaderedContentControl>
+                <HeaderedContentControl Grid.Column="2" Classes="field" Header="Km przy końcu (B)"><TextBox Text="{Binding KmB}" /></HeaderedContentControl>
+              </Grid>
+              <StackPanel Spacing="12" DataContext="{Binding SelectedEdge}" x:DataType="m:SceneryEdge">
+                <Grid ColumnDefinitions="*,10,*">
+                  <HeaderedContentControl Classes="field" Header="Szlak">
+                    <ComboBox SelectedIndex="{Binding Tracks, Converter={StaticResource EnumIndex}}">
+                      <ComboBoxItem Content="dwutorowy (II)" /><ComboBoxItem Content="jednotorowy (I)" />
+                    </ComboBox>
+                  </HeaderedContentControl>
+                  <HeaderedContentControl Grid.Column="2" Classes="field" Header="Blokada / srk">
+                    <TextBox Text="{Binding Blocking}" Watermark="S, SS, PP, L2…" />
+                  </HeaderedContentControl>
+                </Grid>
+                <HeaderedContentControl Classes="field" Header="Prowadzenie na schemacie">
+                  <ComboBox SelectedIndex="{Binding Style, Converter={StaticResource EnumIndex}}">
+                    <ComboBoxItem Content="najpierw ukos 45°, potem prosta" />
+                    <ComboBoxItem Content="najpierw prosta, potem ukos 45°" />
+                    <ComboBoxItem Content="linia prosta" />
+                    <ComboBoxItem Content="kąt prosty – najpierw poziomo" />
+                    <ComboBoxItem Content="kąt prosty – najpierw pionowo" />
+                  </ComboBox>
+                </HeaderedContentControl>
+                <WrapPanel>
+                  <CheckBox IsChecked="{Binding Electrified}" Content="zelektryfikowany" Margin="0,0,16,4" />
+                  <CheckBox IsChecked="{Binding AvoidInRouting}" Content="omijaj przy wyznaczaniu tras (bocznica)" />
+                </WrapPanel>
+              </StackPanel>
+              <WrapPanel>
+                <Button Classes="tonal small" Command="{Binding AddEdgeViaCommand}" Margin="0,0,8,8">
+                  <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="VectorPolylinePlus" /><TextBlock Text="Załamanie" /></StackPanel>
+                </Button>
+                <Button Classes="small" Command="{Binding ClearEdgeViaCommand}" Margin="0,0,8,8">
+                  <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="VectorPolylineRemove" /><TextBlock Text="Usuń załamania" /></StackPanel>
+                </Button>
+                <Button Classes="small" Command="{Binding ReverseEdgeCommand}" Margin="0,0,8,8">
+                  <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="SwapHorizontal" /><TextBlock Text="Odwróć A↔B" /></StackPanel>
+                </Button>
+              </WrapPanel>
+            </StackPanel>
+          </Border>
+
+          <Border Classes="card" Background="{DynamicResource Md.Surface}">
+            <StackPanel Spacing="8">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <mi:MaterialIcon Kind="Speedometer" Width="20" Height="20" Foreground="{DynamicResource Md.Primary}" />
+                <TextBlock Classes="title-small" Text="Prędkości w kierunku A → B" VerticalAlignment="Center" />
+              </StackPanel>
+              <TextBlock Classes="body-small" TextWrapping="Wrap" Text="Pusta lista = prędkości domyślne linii na całym odcinku. Przy jeździe B → A tor prawy i lewy zamieniają się automatycznie." />
+              <Grid ColumnDefinitions="*,6,64,6,64,6,Auto">
+                <TextBlock Classes="label" Text="od km" /><TextBlock Grid.Column="2" Classes="label" Text="VP" /><TextBlock Grid.Column="4" Classes="label" Text="VL" />
+              </Grid>
+              <ItemsControl ItemsSource="{Binding SelectedEdge.Changes}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="6" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="m:SpeedChange">
+                    <Grid ColumnDefinitions="*,6,64,6,64,6,Auto">
+                      <TextBox Classes="cell" Text="{Binding Km}" />
+                      <TextBox Grid.Column="2" Classes="cell" Text="{Binding Vp}" />
+                      <TextBox Grid.Column="4" Classes="cell" Text="{Binding Vl}" />
+                      <Button Grid.Column="6" Classes="icon small" Command="{ReflectionBinding $parent[UserControl].DataContext.RemoveEdgeChangeCommand}" CommandParameter="{Binding}"><mi:MaterialIcon Kind="Close" /></Button>
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <Button Classes="small" HorizontalAlignment="Left" Command="{Binding AddEdgeChangeCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="Plus" /><TextBlock Text="Zmiana prędkości" /></StackPanel>
+              </Button>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- ==================================================== sceneria i linie -->
+        <StackPanel Spacing="14" IsVisible="{Binding NothingSelected}">
+          <Border Classes="card" Background="{DynamicResource Md.Surface}">
+            <StackPanel Spacing="12">
+              <TextBlock Classes="label" Text="SCENERIA" />
+              <HeaderedContentControl Classes="field" Header="Nazwa">
+                <TextBox Text="{Binding Project.Scenery.Name}" FontWeight="SemiBold" />
+              </HeaderedContentControl>
+              <Grid ColumnDefinitions="*,10,*">
+                <HeaderedContentControl Classes="field" Header="Skala auto-km [km / jedn.]"><TextBox Text="{Binding Project.Scenery.KmPerUnit}" /></HeaderedContentControl>
+                <HeaderedContentControl Grid.Column="2" Classes="field" Header="Siatka [jedn.]"><TextBox Text="{Binding Project.Scenery.GridSize}" /></HeaderedContentControl>
+              </Grid>
+              <TextBlock Classes="body-small" TextWrapping="Wrap" Text="Kliknij posterunek lub odcinek na schemacie, aby edytować jego dane. Skróty: V – zaznacz, N – posterunek, C – połącz, T – trasa, F – dopasuj widok, Delete – usuń." />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="card" Background="{DynamicResource Md.Surface}">
+            <StackPanel Spacing="10">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Classes="title-small" Text="Linie kolejowe" VerticalAlignment="Center" />
+                <Button Grid.Column="1" Classes="tonal small" Command="{Binding AddLineCommand}">
+                  <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="Plus" /><TextBlock Text="Linia" /></StackPanel>
+                </Button>
+              </Grid>
+              <ItemsControl ItemsSource="{Binding Project.Scenery.Lines}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="10" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="m:SceneryLine">
+                    <Border BorderBrush="{DynamicResource Md.OutlineVariant}" BorderThickness="1" CornerRadius="12" Padding="10">
+                      <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="Auto,8,70,8,*,Auto">
+                          <Button Width="34" Height="34" MinHeight="34" Padding="0" CornerRadius="17" Background="{Binding Color, Converter={StaticResource HexBrush}}" ToolTip.Tip="Kolor linii">
+                            <Button.Flyout>
+                              <Flyout Placement="BottomEdgeAlignedLeft">
+                                <ItemsControl Tag="{Binding}" ItemsSource="{x:Static vm:MainViewModel.Palette}" Width="216" Margin="8">
+                                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                  <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:LineColor">
+                                      <Button Width="32" Height="32" MinHeight="32" Padding="0" CornerRadius="16" Margin="3" Background="{Binding Hex, Converter={StaticResource HexBrush}}" ToolTip.Tip="{Binding Name}" Click="OnPaletteClick" />
+                                    </DataTemplate>
+                                  </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                              </Flyout>
+                            </Button.Flyout>
+                          </Button>
+                          <TextBox Grid.Column="2" Classes="cell" Text="{Binding Number}" FontWeight="SemiBold" Watermark="nr" />
+                          <TextBox Grid.Column="4" Classes="cell" Text="{Binding Name}" Watermark="nazwa linii" />
+                          <Button Grid.Column="5" Classes="icon small danger" Command="{ReflectionBinding $parent[UserControl].DataContext.DeleteLineCommand}" CommandParameter="{Binding}"><mi:MaterialIcon Kind="DeleteOutline" /></Button>
+                        </Grid>
+                        <Grid ColumnDefinitions="60,6,60,8,*">
+                          <TextBox Classes="cell" Text="{Binding DefaultVp}" ToolTip.Tip="Domyślna VP [km/h]" />
+                          <TextBox Grid.Column="2" Classes="cell" Text="{Binding DefaultVl}" ToolTip.Tip="Domyślna VL [km/h]" />
+                          <ComboBox Grid.Column="4" Classes="cell" SelectedIndex="{Binding DefaultTracks, Converter={StaticResource EnumIndex}}">
+                            <ComboBoxItem Content="dwutorowa" /><ComboBoxItem Content="jednotorowa" />
+                          </ComboBox>
+                        </Grid>
+                        <Grid ColumnDefinitions="*,Auto">
+                        <CheckBox IsChecked="{Binding Dashed}" Content="linia przerywana" />
+                        <Button Grid.Column="1" Classes="small" HorizontalAlignment="Left" Command="{ReflectionBinding $parent[UserControl].DataContext.AutoKmCommand}" CommandParameter="{Binding}"
+                                ToolTip.Tip="Kilometraż wg długości na schemacie (od posterunku końcowego lub zaznaczonego)">
+                          <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="RulerSquareCompass" /><TextBlock Text="Auto-kilometraż" /></StackPanel>
+                        </Button>
+                        </Grid>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

@@ -1,0 +1,143 @@
+<!--
+  SKSRJ Timetable generator
+  Copyright (C) 2026 Oskar Jagodziński
+
+  This program is free software: you can redistribute it and/or modify it under the terms of
+  the GNU General Public License as published by the Free Software Foundation, either version 3
+  of the License, or (at your option) any later version, together with the additional terms
+  under Section 7 of that License (see the files LICENSE and ADDITIONAL_TERMS).
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+  Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+  Original source: https://github.com/Hirek193/sksrj
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sksrj.App.ViewModels"
+             xmlns:m="using:Sksrj.Core.Model"
+             xmlns:c="using:Sksrj.App.Controls"
+             xmlns:mi="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Sksrj.App.Views.RunTimeView"
+             x:DataType="vm:MainViewModel">
+  <ScrollViewer IsVisible="{Binding HasTimetable}">
+    <StackPanel Margin="28,24,28,40" Spacing="16" MaxWidth="1100">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="4">
+          <TextBlock Classes="headline" Text="Czasy jazdy – obliczenia trakcyjne" />
+          <TextBlock Classes="body-small" TextWrapping="Wrap"
+                     Text="Ir-11 § 21: czas rozkładowy = A (techniczny czas jazdy z rozruchem, hamowaniem i ograniczeniami prędkości) + B (rezerwa eksploatacyjna) + C (straty na ostrzeżeniach doraźnych) + D (postoje). Licznik = A+B+C, mianownik (czas skrócony) = A+C." />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top" Margin="16,0,0,0">
+          <Button Classes="outlined" Command="{Binding CalculateRunTimesCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="Calculator" /><TextBlock Text="Przelicz" /></StackPanel>
+          </Button>
+          <Button Classes="filled" Command="{Binding ApplyRunTimesCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="ClockCheckOutline" /><TextBlock Text="Wpisz do karty" /></StackPanel>
+          </Button>
+        </StackPanel>
+      </Grid>
+
+      <WrapPanel>
+        <Border Classes="stat"><StackPanel><TextBlock Classes="label" Text="Długość trasy" /><TextBlock Classes="title-large" Text="{Binding RunSummaryKm}" /></StackPanel></Border>
+        <Border Classes="stat"><StackPanel><TextBlock Classes="label" Text="A – techniczny" /><TextBlock Classes="title-large" Text="{Binding RunSummaryA}" /></StackPanel></Border>
+        <Border Classes="stat"><StackPanel><TextBlock Classes="label" Text="B – rezerwa" /><TextBlock Classes="title-large" Text="{Binding RunSummaryB}" /></StackPanel></Border>
+        <Border Classes="stat"><StackPanel><TextBlock Classes="label" Text="C – ostrzeżenia" /><TextBlock Classes="title-large" Text="{Binding RunSummaryC}" /></StackPanel></Border>
+        <Border Classes="stat"><StackPanel><TextBlock Classes="label" Text="D – postoje" /><TextBlock Classes="title-large" Text="{Binding RunSummaryD}" /></StackPanel></Border>
+        <Border Classes="stat" Background="{DynamicResource Md.PrimaryContainer}">
+          <StackPanel><TextBlock Classes="label" Text="Czas przejazdu" Foreground="{DynamicResource Md.OnPrimaryContainer}" /><TextBlock Classes="title-large" Text="{Binding RunSummaryTotal}" Foreground="{DynamicResource Md.OnPrimaryContainer}" /></StackPanel>
+        </Border>
+        <Border Classes="stat"><StackPanel><TextBlock Classes="label" Text="Prędkość handlowa" /><TextBlock Classes="title-large" Text="{Binding RunSummaryAvg}" /></StackPanel></Border>
+      </WrapPanel>
+
+      <Border Classes="card" Padding="12,12,12,8">
+        <c:SpeedChart Result="{Binding RunResult}" Height="330" />
+      </Border>
+
+      <Grid ColumnDefinitions="*,16,*">
+        <Border Classes="card">
+          <StackPanel Spacing="12" DataContext="{Binding SelectedTimetable.RunCalc}" x:DataType="m:RunCalcSettings">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <mi:MaterialIcon Kind="TrainVariant" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+              <TextBlock Classes="title-medium" Text="Pojazd i dynamika jazdy" VerticalAlignment="Center" />
+            </StackPanel>
+            <HeaderedContentControl Classes="field" Header="Profil trakcyjny">
+              <ComboBox ItemsSource="{ReflectionBinding $parent[UserControl].DataContext.Presets}" SelectedItem="{ReflectionBinding $parent[UserControl].DataContext.SelectedPreset}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate x:DataType="m:TractionPreset"><TextBlock Text="{Binding Name}" /></DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+            </HeaderedContentControl>
+            <Grid ColumnDefinitions="*,10,*,10,*">
+              <HeaderedContentControl Classes="field" Header="Przysp. rozruchu [m/s²]"><TextBox Text="{Binding StartAcceleration}" /></HeaderedContentControl>
+              <HeaderedContentControl Grid.Column="2" Classes="field" Header="Moc jedn. [kW/t]"><TextBox Text="{Binding PowerPerTon}" /></HeaderedContentControl>
+              <HeaderedContentControl Grid.Column="4" Classes="field" Header="Hamowanie [m/s²]"><TextBox Text="{Binding Braking}" /></HeaderedContentControl>
+            </Grid>
+            <Grid ColumnDefinitions="*,10,*">
+              <HeaderedContentControl Classes="field" Header="Opór stały [N/kN]"><TextBox Text="{Binding ResistanceA}" /></HeaderedContentControl>
+              <HeaderedContentControl Grid.Column="2" Classes="field" Header="Opór ~V² [N/kN/(km/h)²]"><TextBox Text="{Binding ResistanceC}" /></HeaderedContentControl>
+            </Grid>
+            <Grid ColumnDefinitions="*,10,*">
+              <HeaderedContentControl Classes="field" Header="Vmax składu [km/h]"><TextBox Text="{Binding TrainVmax}" Watermark="z kolumny 9" /></HeaderedContentControl>
+              <HeaderedContentControl Grid.Column="2" Classes="field" Header="Długość pociągu [m]"><TextBox Text="{Binding TrainLength}" Watermark="z kolumny 8" /></HeaderedContentControl>
+            </Grid>
+            <TextBlock Classes="body-small" TextWrapping="Wrap" Text="{ReflectionBinding $parent[UserControl].DataContext.TrainParamsText}" />
+            <TextBlock Classes="body-small" TextWrapping="Wrap" Text="Model: przyspieszenie = min(rozruch, moc/prędkość) − opór ruchu, hamowanie stałym opóźnieniem. Pociąg przyspiesza za ograniczeniem dopiero, gdy minie je całą długością." />
+          </StackPanel>
+        </Border>
+        <Border Grid.Column="2" Classes="card">
+          <StackPanel Spacing="12" DataContext="{Binding SelectedTimetable.RunCalc}" x:DataType="m:RunCalcSettings">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <mi:MaterialIcon Kind="TimerSandComplete" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+              <TextBlock Classes="title-medium" Text="Rezerwy, postoje, zaokrąglenia" VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock Classes="body-small" TextWrapping="Wrap" Text="{ReflectionBinding $parent[UserControl].DataContext.ReserveRuleText}" />
+            <HeaderedContentControl Classes="field" Header="Rezerwa B [min/100 km] (puste = wg rodzaju pociągu)"><TextBox Text="{Binding ReservePer100}" /></HeaderedContentControl>
+            <TextBlock Classes="body-small" TextWrapping="Wrap" Text="{ReflectionBinding $parent[UserControl].DataContext.DwellRuleText}" />
+            <HeaderedContentControl Classes="field" Header="Postój handlowy [min] (puste = wg § 22 ust. 11)"><TextBox Text="{Binding DefaultDwell}" /></HeaderedContentControl>
+            <ToggleSwitch IsChecked="{Binding IncludeTemporary}" OnContent="Wliczaj ostrzeżenia doraźne (C)" OffContent="Pomijaj ostrzeżenia doraźne" />
+            <ToggleSwitch IsChecked="{Binding RoundIr11}" OnContent="Zaokrąglenia wg § 21 ust. 9" OffContent="Bez zaokrągleń godzin" />
+            <ToggleSwitch IsChecked="{Binding UpdateClockTimes}" OnContent="Przeliczaj godziny przyjazdów/odjazdów" OffContent="Wpisuj tylko czasy jazdy" />
+            <TextBlock Classes="body-small" TextWrapping="Wrap" Text="§ 21 ust. 9: odjazd ze stacji początkowej i przyjazd do końcowej – pełne minuty, stacje węzłowe (wersaliki) – 0,5 min, pozostałe – 0,1 min. Godzina startu = odjazd z pierwszego posterunku." />
+          </StackPanel>
+        </Border>
+      </Grid>
+
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock Classes="title-medium" Text="Wyniki na odcinkach" Margin="0,0,0,6" />
+          <Grid ColumnDefinitions="*,70,60,60,60,70,70,60,56" Margin="8,0">
+            <TextBlock Classes="label" Text="Odcinek" />
+            <TextBlock Grid.Column="1" Classes="label" Text="km" TextAlignment="Right" />
+            <TextBlock Grid.Column="2" Classes="label" Text="A" TextAlignment="Right" />
+            <TextBlock Grid.Column="3" Classes="label" Text="B" TextAlignment="Right" />
+            <TextBlock Grid.Column="4" Classes="label" Text="C" TextAlignment="Right" />
+            <TextBlock Grid.Column="5" Classes="label" Text="normalny" TextAlignment="Right" />
+            <TextBlock Grid.Column="6" Classes="label" Text="skrócony" TextAlignment="Right" />
+            <TextBlock Grid.Column="7" Classes="label" Text="V śr." TextAlignment="Right" />
+            <TextBlock Grid.Column="8" Classes="label" Text="postój" TextAlignment="Right" />
+          </Grid>
+          <ItemsControl ItemsSource="{Binding SegmentRows}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:SegmentRow">
+                <Border BorderBrush="{DynamicResource Md.OutlineVariant}" BorderThickness="0,0,0,1" Padding="8,5">
+                  <Grid ColumnDefinitions="*,70,60,60,60,70,70,60,56">
+                    <TextBlock Text="{Binding Route}" FontSize="13" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="1" Text="{Binding Km}" FontSize="13" TextAlignment="Right" />
+                    <TextBlock Grid.Column="2" Text="{Binding A}" FontSize="13" TextAlignment="Right" />
+                    <TextBlock Grid.Column="3" Text="{Binding B}" FontSize="13" TextAlignment="Right" Classes="muted" />
+                    <TextBlock Grid.Column="4" Text="{Binding C}" FontSize="13" TextAlignment="Right" Classes="muted" />
+                    <TextBlock Grid.Column="5" Text="{Binding Normal}" FontSize="13" TextAlignment="Right" FontWeight="SemiBold" />
+                    <TextBlock Grid.Column="6" Text="{Binding Short}" FontSize="13" TextAlignment="Right" />
+                    <TextBlock Grid.Column="7" Text="{Binding Avg}" FontSize="13" TextAlignment="Right" Classes="muted" />
+                    <TextBlock Grid.Column="8" Text="{Binding Dwell}" FontSize="13" TextAlignment="Right" FontWeight="SemiBold" Foreground="{DynamicResource Md.Primary}" />
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

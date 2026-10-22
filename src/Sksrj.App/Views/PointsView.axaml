@@ -1,3 +1,17 @@
+<!--
+  SKSRJ Timetable generator
+  Copyright (C) 2026 Oskar Jagodziński
+
+  This program is free software: you can redistribute it and/or modify it under the terms of
+  the GNU General Public License as published by the Free Software Foundation, either version 3
+  of the License, or (at your option) any later version, together with the additional terms
+  under Section 7 of that License (see the files LICENSE and ADDITIONAL_TERMS).
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+  Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+  Original source: https://github.com/Hirek193/sksrj
+-->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Sksrj.App.ViewModels"
@@ -24,12 +38,23 @@
         <TextBlock Classes="headline" Text="Posterunki" />
         <TextBlock Classes="body-small" Text="Kolumny 5–9 – w kolejności jazdy" />
       </StackPanel>
-      <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="2" Margin="4,0,0,6">
+      <StackPanel Grid.Row="1" Spacing="6" Margin="4,0,0,6">
+      <Border Classes="info" IsVisible="{Binding IsRouteLinked}">
+        <StackPanel Spacing="6">
+          <TextBlock TextWrapping="Wrap" FontSize="12" Text="Trasa ułożona na schemacie – posterunki dodajesz i usuwasz na schemacie. Tutaj edytujesz szczegóły (postoje, godziny, skład, uwagi)." />
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <Button Classes="small" Command="{Binding GoToSchemeCommand}"><StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="TransitConnectionVariant" /><TextBlock Text="Schemat" /></StackPanel></Button>
+            <Button Classes="small" Command="{Binding UnlinkRouteCommand}"><StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="LinkVariantOff" /><TextBlock Text="Odłącz" /></StackPanel></Button>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+      <StackPanel Orientation="Horizontal" Spacing="2">
         <Button Classes="icon" Command="{Binding AddPointCommand}" ToolTip.Tip="Dodaj posterunek za zaznaczonym"><mi:MaterialIcon Kind="PlaylistPlus" /></Button>
         <Button Classes="icon" Command="{Binding DuplicatePointCommand}" ToolTip.Tip="Powiel posterunek"><mi:MaterialIcon Kind="ContentCopy" /></Button>
         <Button Classes="icon" Command="{Binding MovePointUpCommand}" ToolTip.Tip="Przesuń w górę"><mi:MaterialIcon Kind="ArrowUp" /></Button>
         <Button Classes="icon" Command="{Binding MovePointDownCommand}" ToolTip.Tip="Przesuń w dół"><mi:MaterialIcon Kind="ArrowDown" /></Button>
         <Button Classes="icon danger" Command="{Binding DeletePointCommand}" ToolTip.Tip="Usuń posterunek"><mi:MaterialIcon Kind="DeleteOutline" /></Button>
+      </StackPanel>
       </StackPanel>
       <Border Grid.Row="2" Classes="card" Padding="6">
         <ListBox Classes="list" ItemsSource="{Binding SelectedTimetable.Points}" SelectedItem="{Binding SelectedPoint}">
@@ -74,6 +99,12 @@
               </Border>
               <TextBlock Grid.Column="1" Classes="title-medium" Text="Posterunek (kolumna 5)" VerticalAlignment="Center" />
             </Grid>
+            <Border Classes="chiplabel" HorizontalAlignment="Left" IsVisible="{Binding ManualInfra}">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="Zmieniono ręcznie – ponowne ułożenie trasy nie nadpisze nazwy, km i skrótów" VerticalAlignment="Center" />
+                <Button Classes="small" Height="24" MinHeight="24" Padding="8,0" Content="Przywróć ze schematu" Command="{ReflectionBinding $parent[UserControl].DataContext.ResetManualInfraCommand}" />
+              </StackPanel>
+            </Border>
             <HeaderedContentControl Classes="field" Header="Nazwa">
               <TextBox Text="{Binding Name}" FontWeight="SemiBold" />
             </HeaderedContentControl>
@@ -160,6 +191,12 @@
               </HeaderedContentControl>
             </Grid>
             <CheckBox IsChecked="{Binding Stop}" Content="Postój rozkładowy (przyjazd i odjazd pogrubione)" />
+            <Border Classes="chiplabel" HorizontalAlignment="Left" IsVisible="{Binding ManualStop}">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="Postój zmieniony ręcznie" VerticalAlignment="Center" ToolTip.Tip="Zasada postojów trasy nie nadpisze tego posterunku" />
+                <Button Classes="small" Height="24" MinHeight="24" Padding="8,0" Content="Przywróć wg trasy" Command="{ReflectionBinding $parent[UserControl].DataContext.ResetManualStopCommand}" />
+              </StackPanel>
+            </Border>
             <Grid ColumnDefinitions="*,12,*">
               <HeaderedContentControl Classes="field" Header="Czas jazdy normalny (licznik) [min]">
                 <TextBox Text="{Binding TravelNormal}" Watermark="np. 3.5 → 3⁵" />

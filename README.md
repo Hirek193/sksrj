@@ -1,99 +1,226 @@
-# SKSRJ – System konstrukcji symulacyjnych rozkładów jazdy
+# SKSRJ Timetable generator
 
-Aplikacja desktopowa (C#, .NET 8, Avalonia 11, interfejs w stylu **Material Design 3**) do tworzenia
-**służbowych rozkładów jazdy (kart rozkładu jazdy pociągu) w formacie PDF**, wyglądem odwzorowanych
-na wzorze z *Instrukcji o rozkładzie jazdy pociągów Ir-11* (PKP PLK S.A., 2021 – § 32, Załączniki 4 i 5).
-Program pozwala budować karty dla tras rzeczywistych i **fikcyjnych** – na potrzeby symulatorów (np. MaSzyna).
+**Generator symulacyjnych kart rozkładu jazdy** – aplikacja desktopowa (C#, .NET 8, Avalonia 11,
+interfejs w stylu Material Design 3) do tworzenia **służbowych rozkładów jazdy pociągów (kart rozkładu
+jazdy) w formacie PDF** dla symulatorów kolejowych, np. [MaSzyna](https://eu07.pl).
 
-## Co generuje
+Wygląd kart odwzorowuje wzór z *Instrukcji o rozkładzie jazdy pociągów Ir-11* (PKP PLK S.A., 2021 –
+§ 32, Załączniki 4 i 5). Trasy pociągów układa się na **planie schematycznym scenerii**, a czasy jazdy
+liczone są według **§ 21 Ir-11** z uwzględnieniem **ostrzeżeń stałych i doraźnych**. Program działa
+z trasami rzeczywistymi i **fikcyjnymi**.
 
-Karta rozkładu jazdy zgodnie z § 32 ust. 6 Ir-11:
+![Schemat scenerii z ułożoną trasą pociągu](docs/img/schemat.png)
 
-* **strona tytułowa** (Zał. 5) – wydawca, rodzaj rozkładu, „POCIĄGU NR …”, przewoźnik, wniosek,
-  zarządzenie, „wygenerowano w systemie … w dniu … r. o godz. …”, stopka „Maszynisto!”;
-* **strony szczegółowego rozkładu** – nagłówek (rodzaj, numer, nr systemowy, relacja, numer strony) i 9 kolumn:
-  1. Nr linii, 2. Km (zmiany prędkości; pogrubione – zmiana na torze, dla którego opracowano rozkład),
-  3. V<sub>P</sub>, 4. V<sub>L</sub> (połączone na odcinkach jednotorowych), 5. Stacja (nazwa – stacje
-  pogrubione, węzłowe wersalikami; kilometr; skróty i znaki umowne; kursywą kilometraż zmiany linii),
-  6. Godzina (przyjazd/odjazd z dokładnością do 0,1 min w indeksie górnym, „|” przy przejeździe,
-  „———” na początku i końcu, ramka ze zmianą rodzaju/numeru pociągu, czasy jazdy normalny/skrócony),
-  7. Lok I/II/III, 8. Obc. lok / Dł. poc., 9. Vmax / % / rodzaj hamulca – wartości niezmienione
-  powtarzane na szaro;
-* **strzałka kierunku** między kolumną 2 i 3 (tor prawy / jednotorowa) lub 4 i 5 (tor lewy),
-  **oznaczenie szlaku** między kolumną 5 i 6 (gruba linia – jednotorowy, dwie cienkie – dwutorowy);
-* pod tabelą: **odnośniki** `*1)`, `*2)` (na stronie, na której występują), na końcu **Kursuje:**
-  i **Uwagi do rozkładu**;
-* łamanie stron (ciągłość odcinków linii i prędkości na kolejnej stronie);
-* arkusze **A5** pionowo albo **A4 poziomo – 2×A5** (jak we wzorze z Ir-11).
+> **Uwaga:** program służy wyłącznie do celów symulacyjnych. Nie jest powiązany z PKP Polskie Linie
+> Kolejowe S.A. ani przez nią autoryzowany i nie może być używany do prowadzenia rzeczywistego ruchu
+> kolejowego.
 
-PDF zawiera osadzoną czcionkę Liberation Serif (metrycznie zgodną z Times New Roman, licencja SIL OFL 1.1).
+---
 
-## Uruchomienie
+## Spis treści
+
+- [Możliwości](#możliwości)
+- [Zrzuty ekranu](#zrzuty-ekranu)
+- [Instalacja i uruchomienie](#instalacja-i-uruchomienie)
+- [Praca z programem](#praca-z-programem)
+- [Obliczenia czasu jazdy](#obliczenia-czasu-jazdy-ir-11--21)
+- [Format pliku projektu](#format-pliku-projektu)
+- [Narzędzie wiersza poleceń](#narzędzie-wiersza-poleceń)
+- [Struktura repozytorium](#struktura-repozytorium)
+- [Licencja i autorstwo](#licencja-i-autorstwo)
+
+## Możliwości
+
+### Karta rozkładu jazdy (PDF)
+
+- **Strona tytułowa** wg Załącznika 5: wydawca, rodzaj rozkładu, „POCIĄGU NR …”, przewoźnik, wniosek,
+  zarządzenie (z generatorem sygnatur wg § 35), „wygenerowano w systemie … w dniu … r. o godz. …”,
+  stopka „Maszynisto!”.
+- **Strony szczegółowego rozkładu** z nagłówkiem i 9 kolumnami:
+  nr linii · km zmian prędkości (pogrubione zmiany na torze rozkładu) · V<sub>P</sub> · V<sub>L</sub>
+  (połączone na odcinkach jednotorowych) · stacja (pogrubienie stacji, wersaliki stacji węzłowych,
+  kilometr, skróty i znaki, kursywą kilometraż zmiany linii) · godzina (0,1 min w indeksie górnym,
+  „|” przy przejeździe, ramka zmiany numeru pociągu, czasy jazdy normalny/skrócony) · Lok I/II/III ·
+  obciążenie i długość · Vmax / % / rodzaj hamulca (wartości niezmienione na szaro).
+- **Strzałka kierunku jazdy** (tor prawy / lewy), **oznaczenie szlaku** (jedno- / dwutorowy),
+  **odnośniki** \*1), \*2) na stronie, na której występują, **„Kursuje:”** i **„Uwagi do rozkładu”**.
+- Strona **„Wykaz ostrzeżeń na trasie pociągu”** ze stratą czasu na każdym ostrzeżeniu.
+- Łamanie stron z zachowaniem ciągłości odcinków linii; arkusze **A5** lub **A4 poziomo – 2×A5**.
+- Osadzona czcionka Liberation Serif (metrycznie zgodna z Times New Roman).
+
+![Strona tytułowa i strona 2 karty](docs/img/karta.png)
+
+### Schemat scenerii
+
+- Wiele linii kolejowych: numer, nazwa, kolor, linia przerywana, prędkości domyślne, jedno/dwutorowa.
+- Posterunki: stacja (kółko), przystanek / posterunek (kreska), zamknięty (przekreślony), koniec linii;
+  ikony obsługi podróżnych, posterunku technicznego ⌘ i lotniska.
+- Odcinki prowadzone pod kątem 0/45/90° (5 stylów) z dowolną liczbą załamań, kilometraż na końcach,
+  zmiany prędkości V<sub>P</sub>/V<sub>L</sub>, blokada liniowa, elektryfikacja, omijanie bocznic przy
+  wyznaczaniu tras.
+- **Inspektor**: metadane klikniętego posterunku (nazwa, rodzaj, pogrubienie / wersaliki, skróty,
+  domyślny postój, czas postoju, godziny czynności, perony, notatki), odcinka lub linii.
+- **Ograniczenia prędkości posterunku** – dla wybranej linii, zakresu km i toru (np. geometria
+  głowicy, rozjazdy): wpisywane do kolumn 3–4 karty albo jako pozycja wykazu ostrzeżeń stałych.
+- **Tryb ciemny schematu** – przełącznik na pasku narzędzi (eksport PDF pozostaje jasny).
+- **Auto-kilometraż** linii według długości rysunku, eksport schematu do PDF (A3) z legendą.
+
+### Trasa pociągu ze schematu
+
+Kliknij na schemacie początek, punkty pośrednie i koniec – droga wyznaczy się sama (najkrótsza,
+z preferencją jazdy tą samą linią). „Ułóż trasę w karcie” tworzy odcinki linii i wszystkie posterunki
+na drodze, ustala postoje według wybranej zasady (osobowy / przyspieszony / tylko wskazane / bez
+postojów) i od razu liczy czasy jazdy. Przystanki osobowe otrzymują rodzaj „po”, a postój handlowy
+„ph” pojawia się tylko tam, gdzie pociąg pasażerski faktycznie się zatrzymuje. Zmiana zasady postojów
+od razu poprawia kartę. Zakładki **Posterunki** i **Trasa** służą potem do dopracowania szczegółów
+(np. jazda torem lewym); ręczne zmiany są zapamiętywane i nie są nadpisywane przy ponownym ułożeniu trasy.
+
+### Ostrzeżenia
+
+Wykaz ostrzeżeń **stałych** (wliczanych do czasu technicznego) i **doraźnych** (rezerwa C) – linia,
+tor, km od–do, prędkość, rodzaj pociągów, przyczyna, ważność – oraz **generator ostrzeżeń doraźnych**
+(losowych, opcjonalnie z ziarnem) do urozmaicania jazd w symulatorze.
+
+## Zrzuty ekranu
+
+| Inspektor posterunku | Posterunki pociągu |
+|---|---|
+| ![Inspektor](docs/img/inspektor.png) | ![Posterunki](docs/img/posterunki.png) |
+
+| Czasy jazdy i wykres v(s) | Ostrzeżenia |
+|---|---|
+| ![Czasy jazdy](docs/img/czasy-jazdy.png) | ![Ostrzeżenia](docs/img/ostrzezenia.png) |
+
+| Ekran startowy | Schemat w PDF |
+|---|---|
+| ![Ekran startowy](docs/img/ekran-startowy.png) | ![Schemat PDF](docs/img/schemat-pdf.png) |
+
+## Instalacja i uruchomienie
+
+### Gotowa wersja dla Windows
+
+Pobierz paczkę z zakładki *Releases* (lub zbuduj ją sam – poniżej), rozpakuj i uruchom `SKSRJ.exe`.
+Wymagany jest [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) (x64).
+
+### Ze źródeł
 
 Wymagany [.NET SDK 8](https://dotnet.microsoft.com/download/dotnet/8.0).
 
 ```bash
+git clone https://github.com/Hirek193/sksrj.git
+cd sksrj
 dotnet run --project src/Sksrj.App
 ```
 
-Samodzielny plik wykonywalny dla Windows (bez instalowania .NET):
+Publikacja:
 
 ```bash
-dotnet publish src/Sksrj.App -c Release -r win-x64 --self-contained true ^
-  -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true ^
-  -p:EnableCompressionInSingleFile=true -p:DebugType=none -o dist/win-x64
+# wymaga zainstalowanego .NET 8 Desktop Runtime
+dotnet publish src/Sksrj.App -c Release -r win-x64 --self-contained false -p:DebugType=none -o dist/SKSRJ
+
+# samodzielny plik wykonywalny (bez instalowania .NET)
+dotnet publish src/Sksrj.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true \
+  -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -o dist/win-x64
 ```
 
-(Analogicznie `-r linux-x64` lub `-r osx-arm64`.)
-
-Narzędzie wiersza poleceń (np. do wsadowego generowania PDF):
-
-```bash
-dotnet run --project tools/Sksrj.Cli -- projekt.sksrj wynik.pdf [indeks|all] [a5|a4]
-dotnet run --project tools/Sksrj.Cli -- --sample katalog   # projekt przykładowy + PDF-y
-```
+Analogicznie dla `-r linux-x64` lub `-r osx-arm64`.
 
 ## Praca z programem
 
-Rail nawigacyjny po lewej, podgląd karty na żywo po prawej (ten sam silnik co eksport PDF).
-
 | Sekcja | Zawartość |
 |---|---|
-| **Pociąg** | rodzaj (podpowiedzi skrótów z Zał. 4: ROJ, EIJ, TME…), numer, nr systemowy, relacja, nagłówek; strona tytułowa; generator sygnatury zarządzenia wg § 35 (RRJ, KRJ, ZRJP…); stopka dla maszynisty |
-| **Trasa** | kolejne odcinki linii (nr linii, km od–do, tor prawy/lewy) i punkty zmiany prędkości (km, V<sub>P</sub>, V<sub>L</sub>, jednotorowy, pogrubienie km) |
-| **Posterunki** | lista posterunków w kolejności jazdy + szczegóły: nazwa, rodzaj (po, pzs, podg…), postój (ph, pt…), km, skróty (R1, H, SS…), kursywy, godziny, czasy jazdy, zmiana numeru pociągu, szlak do następnego, skład; „Przelicz godziny z czasów jazdy” i „Czasy jazdy z godzin” |
-| **Uwagi** | „Kursuje:” (symbole terminów (1)…(7), (A)…(E)), odnośniki, uwagi do rozkładu |
-| **Wydruk** | A5 / A4 2×A5, opcjonalny dopisek „rozkład symulacyjny”, nazwa projektu, motyw, ściąga rodzajów pociągów |
+| **Schemat** | plan scenerii, narzędzia rysowania, inspektor, układanie trasy pociągu |
+| **Pociąg** | rodzaj i numer pociągu, relacja, nagłówek, strona tytułowa, sygnatura zarządzenia, stopka |
+| **Trasa** | odcinki linii (kolumny 1–4): km, prędkości V<sub>P</sub>/V<sub>L</sub>, tor prawy/lewy |
+| **Posterunki** | posterunki (kolumny 5–9): nazwa, km, skróty, kursywy, godziny, czasy jazdy, numer pociągu, skład |
+| **Czasy jazdy** | profil trakcyjny, rezerwy, wykres v(s), wyniki A/B/C/D, wpisanie czasów do karty |
+| **Ostrzeżenia** | wykaz stałych i doraźnych, generator, ostrzeżenia na trasie pociągu |
+| **Uwagi** | „Kursuje:”, odnośniki, uwagi do rozkładu |
+| **Wydruk** | A5 / A4 2×A5, wykaz ostrzeżeń, dopisek „rozkład symulacyjny”, projekt, motyw |
 
-Skróty: `Ctrl+N`, `Ctrl+O`, `Ctrl+S`, `Ctrl+Shift+S`, `Ctrl+E` (eksport PDF), `F5` (odśwież podgląd).
+**Skróty klawiszowe:** `Ctrl+N` nowy projekt · `Ctrl+O` otwórz · `Ctrl+S` zapisz · `Ctrl+Shift+S`
+zapisz jako · `Ctrl+E` eksport PDF · `F5` odśwież podgląd.
+**Na schemacie:** `V` zaznacz · `N` posterunek · `C` połącz · `T` trasa · `F` dopasuj widok ·
+`Delete` usuń · `Esc` przerwij · kółko myszy – powiększenie · prawy przycisk – przesuwanie ·
+dwuklik na odcinku – załamanie · `Shift` – bez przyciągania do siatki.
 
-### Wskazówki dot. danych
+**Wskazówki dot. danych**
 
-* Godziny: `06:28`, `06:28.1` (→ 06:28¹), `06:28:30`; czasy jazdy: `3`, `3.5` (→ 3⁵).
-* Kilometr posterunku może zawierać dwie wartości na styku linii, np. `8.317/1.558`. Posterunek jest
-  przypisywany do kolejnego odcinka linii, w którego zakresie leży jego kilometr (można też wpisać nr linii).
-* Zmiany prędkości leżące na szlaku przed posterunkiem są rysowane w jego wierszu – wiersz wydłuża się,
-  jeśli zmian jest dużo (jak w kartach SKRJ).
-* Skróty w kilku wierszach – Enter w polu „Skróty”; ostatni wiersz drukowany jest obok kilometra.
-* Pola składu puste = bez zmian (wartość powtarzana na szaro).
+- Godziny: `06:28`, `06:28.1` (→ 06:28¹), `06:28:30`; czasy jazdy: `3`, `3.5` (→ 3⁵).
+- Kilometr posterunku może mieć dwie wartości na styku linii, np. `8.317/1.558`.
+- Skróty w kilku wierszach – Enter w polu „Skróty”; ostatni wiersz drukowany jest obok kilometra.
+- Puste pola składu = bez zmian względem poprzedniego posterunku (na karcie na szaro).
+- Tor nr 1 = tor prawy przy jeździe w kierunku rosnącego kilometrażu.
+
+## Obliczenia czasu jazdy (Ir-11 § 21)
+
+| Składnik | Sposób liczenia |
+|---|---|
+| **A** – techniczny czas jazdy | całkowanie ruchu co 10 m: rozruch (przyspieszenie ograniczone mocą jednostkową i oporami ruchu), hamowanie służbowe, prędkości dopuszczalne, ostrzeżenia stałe, Vmax składu i długość pociągu |
+| **B** – rezerwa eksploatacyjna | wg § 21 ust. 6 pkt 2: EIJ 2,5; EC/EN/EI/MH/MM/MP/RP 3; TC/TD 3; pozostałe pasażerskie 5; towarowe i utrzymaniowe 7; niehandlowe 5; luzem 3 min/100 km (lub wartość własna) |
+| **C** – rezerwa modernizacyjna | strata czasu na ostrzeżeniach doraźnych |
+| **D** – postoje | minimalne wg § 22 ust. 11 (0,5 min; 0,3 min dla zespołów trakcyjnych; 1 min MP/MM z wagonów; 2 min z wagonami sypialnymi) lub podane |
+
+Licznik (czas normalny) = A+B+C, mianownik (czas skrócony) = A+C. Godziny zaokrąglane wg § 21 ust. 9
+(stacje początkowe i końcowe – pełne minuty, węzłowe – 0,5 min, pozostałe – 0,1 min).
+Dostępnych jest 10 profili trakcyjnych (EN57, Elf, SA, ED250, EU07/EP09 z wagonami, ET22 z 2000 t,
+pociąg intermodalny, lokomotywy luzem). Model trakcyjny jest uproszczony – wyniki są szacunkiem na
+potrzeby symulacji.
 
 ## Format pliku projektu
 
-`*.sksrj` to czytelny JSON (`TimetableProject` → `Timetables[]` → `Sections[]`/`Points[]`/`Footnotes[]`),
-łatwy do generowania z innych narzędzi (np. z danych scenerii).
+`*.sksrj` to czytelny JSON: `TimetableProject` → `Scenery` (linie, posterunki, odcinki),
+`Restrictions` (ostrzeżenia) i `Timetables[]` (karty: odcinki linii, posterunki, odnośniki, trasa
+na schemacie, parametry obliczeń). Format łatwo generować z innych narzędzi, np. z danych scenerii.
 
-## Struktura
+Projekt przykładowy (wczytywany przy starcie, także w `samples/`) zawiera schemat scenerii
+Kaletnik – Rypinek – Leosin – Sosiny (9 linii, 82 posterunki), dwa pociągi ułożone na schemacie
+(osobowy ROJ 63215 i towarowy TME 44210), przykładowe ostrzeżenia, kartę wpisaną ręcznie oraz
+odwzorowanie przykładowej karty z Załącznika 5 do Ir-11.
+
+## Narzędzie wiersza poleceń
+
+```bash
+dotnet run --project tools/Sksrj.Cli -- projekt.sksrj wynik.pdf [indeks|all] [a5|a4]   # karty
+dotnet run --project tools/Sksrj.Cli -- --scheme projekt.sksrj schemat.pdf             # schemat
+dotnet run --project tools/Sksrj.Cli -- --sample katalog                               # przykłady
+```
+
+## Struktura repozytorium
 
 ```
-src/Sksrj.Core   model, słowniki Ir-11, silnik układu karty (Layout/TimetableLayout.cs), eksport PDF (PDFsharp)
-src/Sksrj.App    aplikacja Avalonia (MVVM, CommunityToolkit.Mvvm, Material.Icons), motyw MD3 w Styles/
-tools/Sksrj.Cli  generowanie PDF z wiersza poleceń
+src/Sksrj.Core     model danych, słowniki Ir-11, skład karty (Layout/), schemat, trasy,
+                   obliczenia trakcyjne i ostrzeżenia (Engine/), eksport PDF (Pdf/)
+src/Sksrj.App      aplikacja Avalonia (MVVM), motyw Material Design 3 (Styles/), widoki (Views/)
+tools/Sksrj.Cli    generowanie PDF z wiersza poleceń
+samples/           projekt przykładowy i wygenerowane z niego PDF-y
+docs/img/          zrzuty ekranu
 ```
 
-Projekt przykładowy (wczytywany przy starcie) zawiera pociąg na trasie fikcyjnej oraz odwzorowanie
-przykładowej karty z Załącznika 5 do Ir-11 – do porównania wyglądu.
+## Licencja i autorstwo
 
-## Licencje zależności
+**SKSRJ Timetable generator** – Copyright © 2026 Oskar Jagodziński.
 
-Avalonia (MIT), PDFsharp (MIT), CommunityToolkit.Mvvm (MIT), Material.Icons.Avalonia (MIT),
-Liberation Serif (SIL OFL 1.1 – `src/Sksrj.Core/Fonts/OFL.txt`).
+Program jest wolnym oprogramowaniem: możesz go rozpowszechniać i modyfikować na warunkach
+[GNU General Public License](LICENSE) w wersji 3 lub (według uznania) dowolnej późniejszej, wraz
+z [warunkami dodatkowymi](ADDITIONAL_TERMS) wg § 7 tej licencji. W skrócie warunki dodatkowe wymagają:
+
+1. **zachowania atrybucji** w plikach źródłowych i w informacjach prawnych programu (w interfejsie –
+   w miejscu łatwo dostępnym, np. na ekranie startowym lub w oknie „O programie”):
+
+   ```
+   Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+   Original source: https://github.com/Hirek193/sksrj
+   ```
+
+2. **wyraźnego oznaczania zmienionych wersji** jako innych niż oryginał,
+3. **nieużywania nazwy „SKSRJ Timetable generator” i logo** jako nazwy własnej wersji zmienionej bez
+   pisemnej zgody autora.
+
+Program jest rozpowszechniany **bez jakiejkolwiek gwarancji**. Pełne teksty: [`LICENSE`](LICENSE),
+[`ADDITIONAL_TERMS`](ADDITIONAL_TERMS). Licencje użytych bibliotek i czcionek (MIT, Apache 2.0,
+SIL OFL 1.1) opisuje [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md); są one dostępne również
+w programie (przycisk ⓘ „O programie”).
+
+Wygląd kart rozkładu jazdy oraz słowniki znaków i skrótów oparto na instrukcji Ir-11; prawa do
+instrukcji przysługują PKP Polskie Linie Kolejowe S.A.

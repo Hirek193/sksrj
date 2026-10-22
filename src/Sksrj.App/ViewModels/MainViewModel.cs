@@ -1,3 +1,16 @@
+// SKSRJ Timetable generator
+// Copyright (C) 2026 Oskar Jagodziński
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of
+// the GNU General Public License as published by the Free Software Foundation, either version 3
+// of the License, or (at your option) any later version, together with the additional terms
+// under Section 7 of that License (see the files LICENSE and ADDITIONAL_TERMS).
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+// without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+// Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+// Original source: https://github.com/Hirek193/sksrj
+
 using System.Collections.ObjectModel;
 using System.Globalization;
 using Avalonia;
@@ -6,7 +19,9 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sksrj.App.Services;
+using Sksrj.Core;
 using Sksrj.Core.Dictionaries;
+using Sksrj.Core.Engine;
 using Sksrj.Core.Layout;
 using Sksrj.Core.Model;
 using Sksrj.Core.Pdf;
@@ -22,7 +37,7 @@ public partial class MainViewModel : ObservableObject
     private readonly DispatcherTimer _debounce;
     private DeepChangeTracker? _tracker;
 
-    public MainViewModel(IDialogService dialogs)
+    public MainViewModel(IDialogService dialogs, TimetableProject? initialProject = null, string? initialPath = null)
     {
         _dialogs = dialogs;
         _debounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
@@ -30,18 +45,42 @@ public partial class MainViewModel : ObservableObject
         _clock = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
         _clock.Tick += (_, _) => { if (SelectedTimetable?.UseCurrentGenerationTime == true) Relayout(); };
         _clock.Start();
-        LoadProject(Samples.Project(), null);
+        LoadProject(initialProject ?? Samples.Project(), initialPath);
         IsDirty = false;
+        _loadingSettings = true;
+        IsDark = _settings.IsDark;
+        SchemeDark = _settings.SchemeDark;
+        _loadingSettings = false;
     }
+
+    private readonly AppSettings _settings = AppSettings.Load();
+    private bool _loadingSettings;
+
+    /// <summary>Schemat scenerii w trybie ciemnym (tylko edytor – eksport PDF zawsze jasny).</summary>
+    [ObservableProperty] private bool _schemeDark;
+
+    partial void OnSchemeDarkChanged(bool value)
+    {
+        SchemeInvalidated?.Invoke();
+        if (_loadingSettings) return;
+        _settings.SchemeDark = value; _settings.Save();
+    }
+
+    [RelayCommand] private void ToggleSchemeTheme() => SchemeDark = !SchemeDark;
+
+    public string AppName => AppInfo.Name;
 
     private readonly DispatcherTimer _clock;
 
     // ================================================================ słowniki dla UI
     public IReadOnlyList<NavItem> Navigation { get; } = new NavItem[]
     {
+        new("Schemat", Material.Icons.MaterialIconKind.TransitConnectionVariant),
         new("Pociąg", Material.Icons.MaterialIconKind.Train),
         new("Trasa", Material.Icons.MaterialIconKind.MapMarkerPath),
         new("Posterunki", Material.Icons.MaterialIconKind.FormatListNumbered),
+        new("Czasy jazdy", Material.Icons.MaterialIconKind.ChartBellCurveCumulative),
+        new("Ostrzeżenia", Material.Icons.MaterialIconKind.AlertOctagonOutline),
         new("Uwagi", Material.Icons.MaterialIconKind.NoteTextOutline),
         new("Wydruk", Material.Icons.MaterialIconKind.PrinterOutline),
     };
@@ -74,16 +113,22 @@ public partial class MainViewModel : ObservableObject
 
     public ObservableCollection<string> Warnings { get; } = new();
 
-    public bool IsTrainPage => SelectedPage == 0;
-    public bool IsRoutePage => SelectedPage == 1;
-    public bool IsPointsPage => SelectedPage == 2;
-    public bool IsNotesPage => SelectedPage == 3;
-    public bool IsPrintPage => SelectedPage == 4;
+    public const int PageScheme = 0, PageTrain = 1, PageRoute = 2, PagePoints = 3, PageRun = 4, PageRestrictions = 5, PageNotes = 6, PagePrint = 7;
+    public bool IsSchemePage => SelectedPage == PageScheme;
+    public bool IsTrainPage => SelectedPage == PageTrain;
+    public bool IsRoutePage => SelectedPage == PageRoute;
+    public bool IsPointsPage => SelectedPage == PagePoints;
+    public bool IsRunPage => SelectedPage == PageRun;
+    public bool IsRestrictionsPage => SelectedPage == PageRestrictions;
+    public bool IsNotesPage => SelectedPage == PageNotes;
+    public bool IsPrintPage => SelectedPage == PagePrint;
+    public bool ShowPreviewPane => PreviewVisible && !IsSchemePage;
+    public bool ShowNoTimetable => !HasTimetable && !IsSchemePage;
     public bool HasSelectedPoint => SelectedPoint != null;
     public bool HasTimetable => SelectedTimetable != null;
     public int WarningCount => Warnings.Count;
     public string PageCountText => PreviewPages == null ? "" : $"{PreviewPages.Count} {Plural(PreviewPages.Count, "strona", "strony", "stron")}";
-    public string WindowTitle => $"SKSRJ – {(CurrentPath == null ? Project.ProjectName : Path.GetFileName(CurrentPath))}{(IsDirty ? " •" : "")}";
+    public string WindowTitle => $"{AppInfo.Name} – {(CurrentPath == null ? Project.ProjectName : Path.GetFileName(CurrentPath))}{(IsDirty ? " •" : "")}";
     public string ZoomText => $"{Math.Round(Zoom * 100)}%";
     public int SelectedPointNumber => SelectedTimetable == null || SelectedPoint == null ? 0 : SelectedTimetable.Points.IndexOf(SelectedPoint) + 1;
 
@@ -97,14 +142,26 @@ public partial class MainViewModel : ObservableObject
     partial void OnSelectedPageChanged(int value)
     {
         OnPropertyChanged(nameof(IsTrainPage)); OnPropertyChanged(nameof(IsRoutePage)); OnPropertyChanged(nameof(IsPointsPage));
-        OnPropertyChanged(nameof(IsNotesPage)); OnPropertyChanged(nameof(IsPrintPage));
+        OnPropertyChanged(nameof(IsNotesPage)); OnPropertyChanged(nameof(IsPrintPage)); OnPropertyChanged(nameof(IsSchemePage));
+        OnPropertyChanged(nameof(IsRunPage)); OnPropertyChanged(nameof(IsRestrictionsPage)); OnPropertyChanged(nameof(ShowPreviewPane)); OnPropertyChanged(nameof(ShowNoTimetable));
+        if (value == PageRestrictions) OnPropertyChanged(nameof(KnownLinesText));
     }
 
     partial void OnSelectedTimetableChanged(Timetable? value)
     {
         SelectedPoint = value?.Points.FirstOrDefault();
-        OnPropertyChanged(nameof(HasTimetable));
+        OnPropertyChanged(nameof(HasTimetable)); OnPropertyChanged(nameof(ShowNoTimetable));
+        SyncPreset();
+        RecomputeRoute();
         Relayout();
+    }
+
+    partial void OnPreviewVisibleChanged(bool value) => OnPropertyChanged(nameof(ShowPreviewPane));
+
+    private void NotifyStructureCommands()
+    {
+        AddPointCommand.NotifyCanExecuteChanged(); DuplicatePointCommand.NotifyCanExecuteChanged(); DeletePointCommand.NotifyCanExecuteChanged();
+        MovePointUpCommand.NotifyCanExecuteChanged(); MovePointDownCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnSelectedPointChanged(RoutePoint? value)
@@ -121,6 +178,9 @@ public partial class MainViewModel : ObservableObject
     partial void OnIsDarkChanged(bool value)
     {
         if (Application.Current != null) Application.Current.RequestedThemeVariant = value ? ThemeVariant.Dark : ThemeVariant.Light;
+        if (_loadingSettings) return;
+        SchemeDark = value; // schemat podąża za motywem programu (można go potem przełączyć osobno)
+        _settings.IsDark = value; _settings.Save();
     }
 
     // ================================================================ projekt
@@ -131,7 +191,11 @@ public partial class MainViewModel : ObservableObject
         CurrentPath = path;
         _tracker = new DeepChangeTracker(p);
         _tracker.Changed += (_, _) => { IsDirty = true; _debounce.Stop(); _debounce.Start(); OnPropertyChanged(nameof(SelectedPointNumber)); };
+        _tracker.ItemChanged += OnTrackedItemChanged;
+        CurrentLine = p.Scenery.Lines.FirstOrDefault();
+        ClearSelection();
         SelectedTimetable = p.Timetables.FirstOrDefault();
+        FitSchemeRequested?.Invoke();
         OnPropertyChanged(nameof(LayoutA5)); OnPropertyChanged(nameof(LayoutA4)); OnPropertyChanged(nameof(SheetLayout));
         OnPropertyChanged(nameof(WindowTitle));
         IsDirty = false;
@@ -154,9 +218,11 @@ public partial class MainViewModel : ObservableObject
         if (SelectedTimetable == null) { PreviewPages = null; OnPropertyChanged(nameof(WarningCount)); return; }
         try
         {
-            var r = TimetableLayout.Build(SelectedTimetable, Project.Print, _measurer);
+            var r = TimetableLayout.Build(SelectedTimetable, Project.Print, _measurer, null, RestrictionTools.Effective(Project));
             PreviewPages = r.Pages;
             foreach (var w in r.Warnings.Distinct()) Warnings.Add(w);
+            ComputeRunTime();
+            if (RunResult != null) foreach (var w in RunResult.Warnings.Distinct()) if (!Warnings.Contains(w)) Warnings.Add(w);
         }
         catch (Exception ex)
         {
@@ -165,6 +231,8 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(WarningCount));
         OnPropertyChanged(nameof(SheetLayout));
     }
+
+    public void ShowMessage(string text) => Toast(text);
 
     private CancellationTokenSource? _toastCts;
     private async void Toast(string text)
@@ -244,7 +312,7 @@ public partial class MainViewModel : ObservableObject
         if (path == null) return;
         try
         {
-            var layout = TimetableLayout.Build(t, Project.Print, _measurer);
+            var layout = TimetableLayout.Build(t, Project.Print, _measurer, null, RestrictionTools.Effective(Project));
             await using var fs = File.Create(path);
             PdfExporter.Export(new[] { (t, layout) }, Project.Print, fs, $"Karta rozkładu jazdy pociągu {t.TrainCategory} {t.TrainNumber}".Trim());
             Toast($"Zapisano {Path.GetFileName(path)}");
@@ -260,7 +328,7 @@ public partial class MainViewModel : ObservableObject
         if (path == null) return;
         try
         {
-            var cards = Project.Timetables.Select(t => (t, TimetableLayout.Build(t, Project.Print, _measurer))).ToList();
+            var cards = Project.Timetables.Select(t => (t, TimetableLayout.Build(t, Project.Print, _measurer, null, RestrictionTools.Effective(Project)))).ToList();
             await using var fs = File.Create(path);
             PdfExporter.Export(cards, Project.Print, fs, Project.ProjectName);
             Toast($"Zapisano {cards.Count} kart do {Path.GetFileName(path)}");
@@ -269,6 +337,7 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand] private void ToggleTheme() => IsDark = !IsDark;
+    [RelayCommand] private Task ShowAbout() => _dialogs.ShowAboutAsync();
     [RelayCommand] private void TogglePreview() => PreviewVisible = !PreviewVisible;
     [RelayCommand] private void ZoomIn() => Zoom = Math.Min(3, Math.Round(Zoom + 0.1, 2));
     [RelayCommand] private void ZoomOut() => Zoom = Math.Max(0.3, Math.Round(Zoom - 0.1, 2));
@@ -278,14 +347,19 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void AddTimetable()
     {
-        var t = Samples.NewEmpty();
+        var t = Project.Scenery.Nodes.Count > 0 ? new Timetable { TrainCategory = "ROJ" } : Samples.NewEmpty();
         if (SelectedTimetable != null)
         {
             t.Issuer = SelectedTimetable.Issuer; t.Carrier = SelectedTimetable.Carrier; t.SystemName = SelectedTimetable.SystemName;
         }
         Project.Timetables.Add(t);
         SelectedTimetable = t;
-        SelectedPage = 0;
+        if (Project.Scenery.Nodes.Count > 0)
+        {
+            SelectedPage = PageScheme; Tool = SchemeTool.Route;
+            Toast("Nowa karta – kliknij na schemacie początek, punkty pośrednie i koniec trasy");
+        }
+        else SelectedPage = PageTrain;
     }
 
     [RelayCommand]
@@ -375,7 +449,7 @@ public partial class MainViewModel : ObservableObject
     }
 
     // ================================================================ posterunki
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanEditStructure))]
     private void AddPoint()
     {
         var t = SelectedTimetable; if (t == null) return;
@@ -385,7 +459,7 @@ public partial class MainViewModel : ObservableObject
         SelectedPoint = p;
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanEditStructure))]
     private void DuplicatePoint()
     {
         var t = SelectedTimetable; if (t == null || SelectedPoint == null) return;
@@ -394,7 +468,7 @@ public partial class MainViewModel : ObservableObject
         SelectedPoint = p;
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanEditStructure))]
     private void DeletePoint()
     {
         var t = SelectedTimetable; if (t == null || SelectedPoint == null) return;
@@ -403,10 +477,10 @@ public partial class MainViewModel : ObservableObject
         SelectedPoint = t.Points.Count == 0 ? null : t.Points[Math.Clamp(i, 0, t.Points.Count - 1)];
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanEditStructure))]
     private void MovePointUp() { if (SelectedPoint != null) { var p = SelectedPoint; Move(SelectedTimetable?.Points, p, -1); SelectedPoint = p; OnPropertyChanged(nameof(SelectedPointNumber)); } }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanEditStructure))]
     private void MovePointDown() { if (SelectedPoint != null) { var p = SelectedPoint; Move(SelectedTimetable?.Points, p, +1); SelectedPoint = p; OnPropertyChanged(nameof(SelectedPointNumber)); } }
 
     [RelayCommand]

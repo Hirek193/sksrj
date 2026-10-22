@@ -1,0 +1,53 @@
+<!--
+  SKSRJ Timetable generator
+  Copyright (C) 2026 Oskar Jagodziński
+
+  This program is free software: you can redistribute it and/or modify it under the terms of
+  the GNU General Public License as published by the Free Software Foundation, either version 3
+  of the License, or (at your option) any later version, together with the additional terms
+  under Section 7 of that License (see the files LICENSE and ADDITIONAL_TERMS).
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+  Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+  Original source: https://github.com/Hirek193/sksrj
+-->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Sksrj.App.Views.SplashWindow"
+        Width="640" Height="400" CanResize="False" ShowInTaskbar="True"
+        SystemDecorations="None" WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource Md.Surface}" Topmost="False"
+        Title="SKSRJ Timetable generator"
+        Icon="avares://SKSRJ/Assets/sksrj.png">
+  <Border BorderBrush="{DynamicResource Md.OutlineVariant}" BorderThickness="1">
+    <Grid RowDefinitions="*,Auto">
+      <!-- logo -->
+      <StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14">
+        <Image Source="avares://SKSRJ/Assets/sksrj.png" Width="128" Height="128" HorizontalAlignment="Center" />
+        <TextBlock Text="SKSRJ" FontSize="44" FontWeight="Bold" HorizontalAlignment="Center"
+                   Foreground="{DynamicResource Md.Primary}" LetterSpacing="4" />
+        <TextBlock Text="Timetable generator" FontSize="18" HorizontalAlignment="Center" Margin="0,-12,0,0"
+                   Foreground="{DynamicResource Md.OnSurface}" />
+        <TextBlock x:Name="TaglineText" FontSize="13" HorizontalAlignment="Center" Foreground="{DynamicResource Md.OnSurfaceVariant}" />
+      </StackPanel>
+
+      <!-- atrybucja i stan ładowania -->
+      <Border Grid.Row="1" Background="{DynamicResource Md.SurfaceContainerHigh}" Padding="28,14,28,16">
+        <StackPanel Spacing="8">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock x:Name="StatusText" Text="Trwa ładowanie programu…" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource Md.OnSurface}" />
+            <TextBlock Grid.Column="1" x:Name="VersionText" FontSize="12" Foreground="{DynamicResource Md.OnSurfaceVariant}" />
+          </Grid>
+          <ProgressBar IsIndeterminate="True" Height="4" MinHeight="4" CornerRadius="2"
+                       Foreground="{DynamicResource Md.Primary}" Background="{DynamicResource Md.SecondaryContainer}" />
+          <StackPanel Spacing="1" Margin="0,4,0,0">
+            <TextBlock x:Name="CopyrightText" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Md.OnSurface}" />
+            <TextBlock x:Name="AttributionText" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource Md.OnSurfaceVariant}" />
+            <TextBlock x:Name="LicenseText" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource Md.OnSurfaceVariant}" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Border>
+</Window>

@@ -1,3 +1,16 @@
+// SKSRJ Timetable generator
+// Copyright (C) 2026 Oskar Jagodziński
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of
+// the GNU General Public License as published by the Free Software Foundation, either version 3
+// of the License, or (at your option) any later version, together with the additional terms
+// under Section 7 of that License (see the files LICENSE and ADDITIONAL_TERMS).
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+// without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+// Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+// Original source: https://github.com/Hirek193/sksrj
+
 using System.Reflection;
 using PdfSharp.Drawing;
 using PdfSharp.Fonts;
@@ -24,8 +37,12 @@ public sealed class EmbeddedFontResolver : IFontResolver
         }
     }
 
+    public const string SansFamily = "Liberation Sans";
+
     public FontResolverInfo? ResolveTypeface(string familyName, bool bold, bool italic)
     {
+        if (familyName.Equals(SansFamily, StringComparison.OrdinalIgnoreCase))
+            return new FontResolverInfo(bold ? "LiberationSans-Bold" : "LiberationSans-Regular");
         var face = (bold, italic) switch
         {
             (true, true) => "LiberationSerif-BoldItalic",
@@ -53,8 +70,8 @@ public sealed class EmbeddedFontResolver : IFontResolver
 public sealed class PdfTextMeasurer : ITextMeasurer
 {
     private readonly XGraphics _g;
-    private readonly Dictionary<(double, bool, bool), XFont> _fonts = new();
-    private readonly Dictionary<(string, double, bool, bool), double> _cache = new();
+    private readonly Dictionary<(double, bool, bool, bool), XFont> _fonts = new();
+    private readonly Dictionary<(string, double, bool, bool, bool), double> _cache = new();
 
     public PdfTextMeasurer()
     {
@@ -64,11 +81,11 @@ public sealed class PdfTextMeasurer : ITextMeasurer
 
     internal XFont Font(FontSpec f)
     {
-        var key = (f.Size, f.Bold, f.Italic);
+        var key = (f.Size, f.Bold, f.Italic, f.Sans);
         if (!_fonts.TryGetValue(key, out var font))
         {
-            var style = (f.Bold ? XFontStyleEx.Bold : XFontStyleEx.Regular) | (f.Italic ? XFontStyleEx.Italic : XFontStyleEx.Regular);
-            font = new XFont(EmbeddedFontResolver.Family, f.Size, style, new XPdfFontOptions(PdfFontEncoding.Unicode));
+            var style = (f.Bold ? XFontStyleEx.Bold : XFontStyleEx.Regular) | (f.Italic && !f.Sans ? XFontStyleEx.Italic : XFontStyleEx.Regular);
+            font = new XFont(f.Sans ? EmbeddedFontResolver.SansFamily : EmbeddedFontResolver.Family, f.Size, style, new XPdfFontOptions(PdfFontEncoding.Unicode));
             _fonts[key] = font;
         }
         return font;
@@ -76,7 +93,7 @@ public sealed class PdfTextMeasurer : ITextMeasurer
 
     public double Width(string text, FontSpec font)
     {
-        var key = (text, font.Size, font.Bold, font.Italic);
+        var key = (text, font.Size, font.Bold, font.Italic, font.Sans);
         lock (_cache)
         {
             if (_cache.TryGetValue(key, out var w)) return w;
@@ -115,7 +132,7 @@ public static class PdfExporter
         var measurer = new PdfTextMeasurer();
         using var doc = new PdfDocument();
         doc.Info.Title = title;
-        doc.Info.Creator = "SKSRJ – System konstrukcji symulacyjnych rozkładów jazdy";
+        doc.Info.Creator = AppInfo.Name;
         foreach (var (_, layout) in cards)
         {
             foreach (var (w, h, items) in Sheets(layout.Pages, print.Layout))
@@ -136,12 +153,27 @@ public static class PdfExporter
         doc.Save(output, false);
     }
 
-    public static void ExportFile(Timetable t, PrintSettings print, string path)
+    public static void ExportFile(Timetable t, PrintSettings print, string path, IEnumerable<SpeedRestriction>? restrictions = null)
     {
         var m = new PdfTextMeasurer();
-        var layout = TimetableLayout.Build(t, print, m);
+        var layout = TimetableLayout.Build(t, print, m, null, restrictions);
         using var fs = File.Create(path);
         Export(new[] { (t, layout) }, print, fs, $"Karta rozkładu jazdy pociągu {t.TrainCategory} {t.TrainNumber}".Trim());
+    }
+
+    /// <summary>Eksport planu schematycznego scenerii do PDF.</summary>
+    public static void ExportScheme(Scenery sc, Stream output)
+    {
+        EmbeddedFontResolver.Install();
+        var m = new PdfTextMeasurer();
+        var pd = Engine.SchematicRenderer.ExportPage(sc, m);
+        using var doc = new PdfDocument();
+        doc.Info.Title = sc.Name;
+        doc.Info.Creator = AppInfo.Name;
+        var page = doc.AddPage();
+        page.Width = XUnit.FromPoint(pd.Width); page.Height = XUnit.FromPoint(pd.Height);
+        using (var g = XGraphics.FromPdfPage(page)) Render(g, pd, m);
+        doc.Save(output, false);
     }
 
     private static XColor C(Rgb c) => XColor.FromArgb(c.R, c.G, c.B);
@@ -161,6 +193,21 @@ public static class PdfExporter
                 case PolygonOp p:
                     g.DrawPolygon(new XSolidBrush(C(p.Color)), p.Points.Select(x => new XPoint(x.X, x.Y)).ToArray(), XFillMode.Winding);
                     break;
+                case EllipseOp el:
+                {
+                    var rect = new XRect(el.Cx - el.Rx, el.Cy - el.Ry, el.Rx * 2, el.Ry * 2);
+                    if (el.Fill is { } f && el.Stroke is { } st) g.DrawEllipse(new XPen(C(st), el.StrokeWidth), new XSolidBrush(C(f)), rect);
+                    else if (el.Fill is { } f2) g.DrawEllipse(new XSolidBrush(C(f2)), rect);
+                    else if (el.Stroke is { } st2) g.DrawEllipse(new XPen(C(st2), el.StrokeWidth), rect);
+                    break;
+                }
+                case PolylineOp pl:
+                {
+                    var pen = new XPen(C(pl.Color), pl.Width) { LineJoin = pl.RoundJoin ? XLineJoin.Round : XLineJoin.Miter, LineCap = pl.Dash == null ? XLineCap.Round : XLineCap.Flat };
+                    if (pl.Dash != null) pen.DashPattern = pl.Dash.Select(d => d / Math.Max(0.1, pl.Width)).ToArray();
+                    g.DrawLines(pen, pl.Points.Select(x => new XPoint(x.X, x.Y)).ToArray());
+                    break;
+                }
                 case TextOp t:
                     g.DrawString(t.Text, m.Font(t.Font), new XSolidBrush(C(t.Color)), t.X, t.Y, XStringFormats.BaseLineLeft);
                     break;
