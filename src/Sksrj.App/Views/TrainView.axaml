@@ -53,7 +53,12 @@
               <TextBox Text="{Binding SelectedTimetable.TrainNumber}" Watermark="np. 1500/1" />
             </HeaderedContentControl>
             <HeaderedContentControl Grid.Column="4" Classes="field" Header="Numer systemowy (w nawiasie)">
-              <TextBox Text="{Binding SelectedTimetable.SystemNumber}" Watermark="np. 114144" />
+              <Grid ColumnDefinitions="*,6,Auto">
+                <TextBox Text="{Binding SelectedTimetable.SystemNumber}" Watermark="np. 114144" />
+                <Button Grid.Column="2" Classes="tonal" Command="{Binding GenerateSystemNumberCommand}" ToolTip.Tip="{Binding SystemNumberTip}">
+                  <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="Dice5Outline" /><TextBlock Text="Generuj" /></StackPanel>
+                </Button>
+              </Grid>
             </HeaderedContentControl>
           </Grid>
           <Grid ColumnDefinitions="*,16,*,8,Auto">
@@ -67,9 +72,14 @@
               <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="ArrowLeftRight" /><TextBlock Text="Z trasy" /></StackPanel>
             </Button>
           </Grid>
-          <HeaderedContentControl Classes="field" Header="Nagłówek stron rozkładu (opcjonalnie – zastępuje składany automatycznie)">
-            <TextBox Text="{Binding SelectedTimetable.HeaderOverride}" Watermark="automatycznie: rodzaje pociągu, numer, (nr systemowy) Relacja od - do" />
-          </HeaderedContentControl>
+          <Grid ColumnDefinitions="*,8,Auto">
+            <HeaderedContentControl Classes="field" Header="Nagłówek stron rozkładu (opcjonalnie – zastępuje składany automatycznie)">
+              <TextBox Text="{Binding SelectedTimetable.HeaderOverride}" Watermark="automatycznie: rodzaje pociągu, numer, (nr systemowy) Relacja od - do" />
+            </HeaderedContentControl>
+            <Button Grid.Column="2" Classes="tonal" VerticalAlignment="Bottom" Command="{Binding FillAutoHeaderCommand}" ToolTip.Tip="Wklej nagłówek złożony automatycznie, by go dalej edytować">
+              <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="AutoFix" /><TextBlock Text="Automatycznie" /></StackPanel>
+            </Button>
+          </Grid>
         </StackPanel>
       </Border>
 
@@ -180,7 +190,12 @@
               <TextBox Text="{Binding SelectedTimetable.ApplicationNumber}" />
             </HeaderedContentControl>
             <HeaderedContentControl Grid.Column="2" Classes="field" Header="z dnia">
-              <TextBox Text="{Binding SelectedTimetable.ApplicationDate}" Watermark="dd.mm.rrrr" />
+              <Grid ColumnDefinitions="*,6,Auto">
+                <TextBox Text="{Binding SelectedTimetable.ApplicationDate}" Watermark="dd.mm.rrrr" />
+                <Button Grid.Column="2" Classes="tonal" Command="{Binding SetTodayCommand}" CommandParameter="ApplicationDate" ToolTip.Tip="Wpisz dzisiejszą datę">
+                  <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="CalendarToday" /><TextBlock Text="Dziś" /></StackPanel>
+                </Button>
+              </Grid>
             </HeaderedContentControl>
           </Grid>
           <Grid ColumnDefinitions="2*,16,*">
@@ -188,7 +203,12 @@
               <TextBox Text="{Binding SelectedTimetable.OrderNumber}" />
             </HeaderedContentControl>
             <HeaderedContentControl Grid.Column="2" Classes="field" Header="z dnia">
-              <TextBox Text="{Binding SelectedTimetable.OrderDate}" Watermark="dd.mm.rrrr" />
+              <Grid ColumnDefinitions="*,6,Auto">
+                <TextBox Text="{Binding SelectedTimetable.OrderDate}" Watermark="dd.mm.rrrr" />
+                <Button Grid.Column="2" Classes="tonal" Command="{Binding SetTodayCommand}" CommandParameter="OrderDate" ToolTip.Tip="Wpisz dzisiejszą datę">
+                  <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="CalendarToday" /><TextBlock Text="Dziś" /></StackPanel>
+                </Button>
+              </Grid>
             </HeaderedContentControl>
           </Grid>
           <Border Classes="card-outlined">
@@ -213,7 +233,12 @@
           </Grid>
           <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding !SelectedTimetable.UseCurrentGenerationTime}">
             <HeaderedContentControl Classes="field" Header="Data wygenerowania">
-              <TextBox Text="{Binding SelectedTimetable.GenerationDate}" Watermark="dd.mm.rrrr" />
+              <Grid ColumnDefinitions="*,6,Auto">
+                <TextBox Text="{Binding SelectedTimetable.GenerationDate}" Watermark="dd.mm.rrrr" />
+                <Button Grid.Column="2" Classes="tonal" Command="{Binding SetTodayCommand}" CommandParameter="GenerationDate" ToolTip.Tip="Wpisz dzisiejszą datę">
+                  <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="CalendarToday" /><TextBlock Text="Dziś" /></StackPanel>
+                </Button>
+              </Grid>
             </HeaderedContentControl>
             <HeaderedContentControl Grid.Column="2" Classes="field" Header="Godzina wygenerowania">
               <TextBox Text="{Binding SelectedTimetable.GenerationTime}" Watermark="gg:mm:ss" />

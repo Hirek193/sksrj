@@ -196,18 +196,23 @@
                 </StackPanel>
                 <Button Grid.Column="1" Classes="icon danger" VerticalAlignment="Top" Command="{Binding DeleteSelectionCommand}" ToolTip.Tip="Usuń odcinek"><mi:MaterialIcon Kind="DeleteOutline" /></Button>
               </Grid>
+              <Grid ColumnDefinitions="*,8,Auto">
               <HeaderedContentControl Classes="field" Header="Linia kolejowa">
-                <ComboBox ItemsSource="{Binding Project.Scenery.Lines}" SelectedItem="{Binding SelectedEdgeLine}">
-                  <ComboBox.ItemTemplate>
-                    <DataTemplate x:DataType="m:SceneryLine">
-                      <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Border Width="22" Height="6" CornerRadius="3" Background="{Binding Color, Converter={StaticResource HexBrush}}" VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding Display}" />
-                      </StackPanel>
-                    </DataTemplate>
-                  </ComboBox.ItemTemplate>
-                </ComboBox>
-              </HeaderedContentControl>
+                  <ComboBox ItemsSource="{Binding Project.Scenery.Lines}" SelectedItem="{Binding SelectedEdgeLine}">
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate x:DataType="m:SceneryLine">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                          <Border Width="22" Height="6" CornerRadius="3" Background="{Binding Color, Converter={StaticResource HexBrush}}" VerticalAlignment="Center" />
+                          <TextBlock Text="{Binding Display}" />
+                        </StackPanel>
+                      </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
+                </HeaderedContentControl>
+                <Button Grid.Column="2" Classes="tonal" VerticalAlignment="Bottom" Command="{Binding RenameLineCommand}" ToolTip.Tip="Zmień numer linii tego odcinka">
+                  <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="PencilOutline" /><TextBlock Text="Nr linii" /></StackPanel>
+                </Button>
+              </Grid>
               <Grid ColumnDefinitions="*,10,*" DataContext="{Binding SelectedEdge}" x:DataType="m:SceneryEdge">
                 <HeaderedContentControl Classes="field" Header="Km przy początku (A)"><TextBox Text="{Binding KmA}" /></HeaderedContentControl>
                 <HeaderedContentControl Grid.Column="2" Classes="field" Header="Km przy końcu (B)"><TextBox Text="{Binding KmB}" /></HeaderedContentControl>
@@ -289,6 +294,9 @@
               <HeaderedContentControl Classes="field" Header="Nazwa">
                 <TextBox Text="{Binding Project.Scenery.Name}" FontWeight="SemiBold" />
               </HeaderedContentControl>
+              <HeaderedContentControl Classes="field" Header="Scenariusz MaSzyny (do numeru systemowego)">
+                <TextBox Text="{Binding Project.Scenery.ScenarioName}" Watermark="np. td.scn – puste = nazwa schematu" />
+              </HeaderedContentControl>
               <Grid ColumnDefinitions="*,10,*">
                 <HeaderedContentControl Classes="field" Header="Skala auto-km [km / jedn.]"><TextBox Text="{Binding Project.Scenery.KmPerUnit}" /></HeaderedContentControl>
                 <HeaderedContentControl Grid.Column="2" Classes="field" Header="Siatka [jedn.]"><TextBox Text="{Binding Project.Scenery.GridSize}" /></HeaderedContentControl>
@@ -326,7 +334,10 @@
                               </Flyout>
                             </Button.Flyout>
                           </Button>
-                          <TextBox Grid.Column="2" Classes="cell" Text="{Binding Number}" FontWeight="SemiBold" Watermark="nr" />
+                          <Button Grid.Column="2" Classes="tonal small" HorizontalAlignment="Stretch" Padding="8,0" ToolTip.Tip="Zmień numer linii"
+                                  Command="{ReflectionBinding $parent[UserControl].DataContext.RenameLineCommand}" CommandParameter="{Binding}">
+                            <StackPanel Orientation="Horizontal" Spacing="4"><TextBlock Text="{Binding Number}" FontWeight="SemiBold" /><mi:MaterialIcon Kind="PencilOutline" Width="14" Height="14" /></StackPanel>
+                          </Button>
                           <TextBox Grid.Column="4" Classes="cell" Text="{Binding Name}" Watermark="nazwa linii" />
                           <Button Grid.Column="5" Classes="icon small danger" Command="{ReflectionBinding $parent[UserControl].DataContext.DeleteLineCommand}" CommandParameter="{Binding}"><mi:MaterialIcon Kind="DeleteOutline" /></Button>
                         </Grid>

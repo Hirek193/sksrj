@@ -430,6 +430,43 @@ public partial class MainViewModel : ObservableObject
     }
 
     // ================================================================ strona tytułowa
+    [RelayCommand]
+    private void FillAutoHeader()
+    {
+        var t = SelectedTimetable; if (t == null) return;
+        t.HeaderOverride = "";
+        t.HeaderOverride = TimetableLayout.AutoHeader(t);
+    }
+
+    [RelayCommand]
+    private void SetToday(string field)
+    {
+        var t = SelectedTimetable; if (t == null) return;
+        var d = DateTime.Now.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+        switch (field)
+        {
+            case "ApplicationDate": t.ApplicationDate = d; break;
+            case "OrderDate": t.OrderDate = d; break;
+            case "GenerationDate": t.GenerationDate = d; t.UseCurrentGenerationTime = false; break;
+        }
+    }
+
+    private string ScenarioForSystemNumber =>
+        string.IsNullOrWhiteSpace(Project.Scenery.ScenarioName) ? Project.Scenery.Name ?? "" : Project.Scenery.ScenarioName.Trim();
+
+    public string SystemNumberTip =>
+        $"Numer 1–299 wg skryptu MaSzyny: hash(scenariusz[:5]) % 299 + 1 – scenariusz „{ScenarioForSystemNumber}” (ustaw w inspektorze schematu)";
+
+    [RelayCommand]
+    private void GenerateSystemNumber()
+    {
+        var t = SelectedTimetable; if (t == null) return;
+        var sc = ScenarioForSystemNumber;
+        t.SystemNumber = TimetableTools.SystemNumberFromScenario(sc).ToString(CultureInfo.InvariantCulture);
+        Toast($"Numer systemowy {t.SystemNumber} (scenariusz „{sc}”)");
+        OnPropertyChanged(nameof(SystemNumberTip));
+    }
+
     [RelayCommand] private void SetTimetableKind(string kind) { if (SelectedTimetable != null) SelectedTimetable.TimetableKind = kind; }
 
     [RelayCommand]

@@ -235,6 +235,25 @@ public partial class MainViewModel
     }
 
     [RelayCommand]
+    private async Task RenameLine(SceneryLine? l)
+    {
+        l ??= SelectedEdgeLine;
+        if (l == null) return;
+        var v = await _dialogs.PromptAsync("Numer linii", $"Nowy numer linii „{l.Display}”. Zmieni się też w kartach pociągów (odcinki linii, posterunki), ostrzeżeniach i ograniczeniach posterunków.", l.Number, "Zmień");
+        if (v == null) return;
+        v = v.Trim();
+        if (v.Length == 0) { Toast("Numer linii nie może być pusty"); return; }
+        if (Project.Scenery.Lines.Any(x => !ReferenceEquals(x, l) && string.Equals(x.Number?.Trim(), v, StringComparison.OrdinalIgnoreCase))
+            && !await _dialogs.ConfirmAsync("Numer zajęty", $"Linia o numerze {v} już jest na schemacie. Nadać ten sam numer?", "Nadaj"))
+            return;
+        var old = l.Number;
+        var n = TimetableTools.RenameLine(Project, l, v);
+        OnPropertyChanged(nameof(SelectedEdgeLine));
+        OnPropertyChanged(nameof(KnownLinesText));
+        Toast($"Linia {old} → {v}" + (n > 0 ? $" (zaktualizowano {n} odwołań)" : ""));
+    }
+
+    [RelayCommand]
     private async Task DeleteLine(SceneryLine l)
     {
         var sc = Project.Scenery;
@@ -503,6 +522,40 @@ public partial class MainViewModel
         RecomputeRoute();
         FitSchemeRequested?.Invoke();
         Toast($"Zaimportowano schemat „{sc.Name}”" + (unlinked > 0 ? $" – odłączono {unlinked} tras" : ""));
+    }
+
+    [RelayCommand]
+    private async Task ImportMaSzynaTimetable()
+    {
+        var path = await _dialogs.OpenMaSzynaTimetableAsync();
+        if (path == null) return;
+        Sksrj.Core.Import.MaSzynaTimetable data;
+        try { data = Sksrj.Core.Import.MaSzynaImport.Parse(Sksrj.Core.Import.MaSzynaImport.ReadText(path)); }
+        catch (Exception ex) { Toast("Nie można odczytać pliku: " + ex.Message); return; }
+        if (data.Stations.Count < 2) { Toast("Plik nie wygląda na rozkład MaSzyny – nie znaleziono posterunków"); return; }
+        var sc = Project.Scenery;
+        var nums = sc.Lines.Select(l => int.TryParse(l.Number, out var v) ? v : 0).ToList();
+        var vm = new MaSzynaImportViewModel(data, Path.GetFileName(path), CurrentLine?.Number ?? (nums.Count == 0 ? "1" : (nums.Max() + 1).ToString()));
+        if (!await _dialogs.ShowMaSzynaImportAsync(vm)) return;
+        var o = vm.Options;
+        var ids = Sksrj.Core.Import.MaSzynaImport.AddToScenery(sc, data, o, out var line, out var created);
+        CurrentLine = line;
+        var msg = $"Zaimportowano {data.Stations.Count} posterunków ({created} nowych) na linię {line.Number}";
+        if (o.CreateTimetable)
+        {
+            var warn = new List<string>();
+            _applyingRoute = true;
+            Timetable t;
+            try { t = Sksrj.Core.Import.MaSzynaImport.CreateTimetable(sc, data, ids, warn); }
+            finally { _applyingRoute = false; }
+            Project.Timetables.Add(t);
+            SelectedTimetable = t;
+            msg += $" i utworzono kartę {t.DisplayName}";
+            if (warn.Count > 0) msg += $" ({warn.Count} uwag)";
+        }
+        RecomputeRoute();
+        FitSchemeRequested?.Invoke();
+        Toast(msg);
     }
 
     [RelayCommand]

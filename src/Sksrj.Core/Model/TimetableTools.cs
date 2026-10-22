@@ -118,6 +118,54 @@ public static class TimetableTools
         return changed;
     }
 
+    /// <summary>
+    /// Numer systemowy tak jak w skryptach Pythona MaSzyny:
+    /// <c>str((int(hash(state["scenario"][:5])) % 299) + 1)</c> – hash napisu z Pythona 2 (32-bitowy long w Windows),
+    /// napis w kodowaniu Windows-1250, wycinek pierwszych 5 bajtów. Wynik 1–299.
+    /// </summary>
+    public static int SystemNumberFromScenario(string? scenario)
+    {
+        System.Text.Encoding enc;
+        try { System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance); enc = System.Text.Encoding.GetEncoding(1250); }
+        catch { enc = System.Text.Encoding.Latin1; }
+        var bytes = enc.GetBytes(scenario ?? "").Take(5).ToArray();
+        var h = Python2StringHash(bytes);
+        var m = h % 299; if (m < 0) m += 299; // modulo jak w Pythonie (wynik nieujemny)
+        return m + 1;
+    }
+
+    /// <summary>Funkcja skrótu napisu z CPythona 2.7 (bez losowania, long 32-bitowy).</summary>
+    public static int Python2StringHash(byte[] s)
+    {
+        if (s.Length == 0) return 0;
+        unchecked
+        {
+            var x = s[0] << 7;
+            foreach (var b in s) x = (1000003 * x) ^ b;
+            x ^= s.Length;
+            if (x == -1) x = -2;
+            return x;
+        }
+    }
+
+    /// <summary>Zmienia numer linii na schemacie i we wszystkich miejscach, które się do niego odwołują.</summary>
+    public static int RenameLine(TimetableProject p, SceneryLine line, string newNumber)
+    {
+        var old = (line.Number ?? "").Trim(); newNumber = (newNumber ?? "").Trim();
+        if (newNumber.Length == 0 || old == newNumber) return 0;
+        bool Eq(string? x) => string.Equals((x ?? "").Trim(), old, StringComparison.OrdinalIgnoreCase);
+        var n = 0;
+        foreach (var t in p.Timetables)
+        {
+            foreach (var sec in t.Sections) if (Eq(sec.LineNumber)) { sec.LineNumber = newNumber; n++; }
+            foreach (var pt in t.Points) if (Eq(pt.Line)) { pt.Line = newNumber; n++; }
+        }
+        foreach (var r in p.Restrictions) if (Eq(r.Line)) { r.Line = newNumber; n++; }
+        foreach (var node in p.Scenery.Nodes) foreach (var l in node.SpeedLimits) if (Eq(l.Line)) { l.Line = newNumber; n++; }
+        line.Number = newNumber;
+        return n;
+    }
+
     /// <summary>Kopia posterunku (bez parametrów zmiany składu i numeru).</summary>
     public static RoutePoint ClonePoint(RoutePoint p) => ProjectSerializer.Clone(p);
 }

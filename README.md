@@ -60,12 +60,14 @@ restrictions** into account. The program works with both real and **fictional** 
   icons for passenger service, technical post ⌘ and airport.
 - Sections drawn at 0/45/90° (5 styles) with any number of bends, kilometrage at both ends,
   V<sub>P</sub>/V<sub>L</sub> speed changes, block system, electrification, sidings avoided in route finding.
+- **Line renumbering** – changes the line number on the schematic and in every card, restriction and post restriction that refers to it.
 - **Inspector**: metadata of the selected post (name, type, bold / capitals, abbreviations, default stop,
   dwell time, opening hours, platforms, notes), section or line.
 - **Post speed restrictions** – for a chosen line, km range and track (e.g. station throat geometry,
   turnouts): either written into card columns 3–4 or added as an entry in the list of permanent restrictions.
 - **Dark mode for the schematic** – toggle on the toolbar (PDF export stays light).
 - **Automatic kilometrage** of a line from the drawing length, export of the schematic to PDF (A3) with a legend.
+- **Import of MaSzyna timetables** (text `*.txt` files from a scenery's timetable folder): posts, kilometrage, speeds, abbreviations and single/double track are added to the schematic as a line, and optionally a train card is created with the times, running times and consist from the file.
 - **Standalone schematic files** (`*.sksrjs`) – export the schematic and import it into another project (a schematic can also be imported from a `*.sksrj` project).
 
 ### Train route from the schematic
@@ -139,7 +141,7 @@ The same works with `-r linux-x64` or `-r osx-arm64`.
 | Section | Contents |
 |---|---|
 | **Schemat** (schematic) | scenery map, drawing tools, inspector, laying out the train route |
-| **Pociąg** (train) | train category and number, relation, header, title page, order signature, footer; a **bank** of issuer headers and railway undertakings saved for reuse |
+| **Pociąg** (train) | train category and number, system number generated as in MaSzyna scripts (`hash(scenario[:5]) % 299 + 1`), relation, header (with an “auto” fill button), title page, “today” buttons for dates, order signature, footer; a **bank** of issuer headers and railway undertakings saved for reuse |
 | **Trasa** (route) | line sections (columns 1–4): km, V<sub>P</sub>/V<sub>L</sub> speeds, right/left track |
 | **Posterunki** (posts) | posts (columns 5–9): name, km, abbreviations, italics, times, running times, train number, consist; batch setting of commercial stop times for halts, stations and junction stations (select all / none) |
 | **Czasy jazdy** (running times) | traction profile, reserves, v(s) chart, A/B/C/D results, writing times into the card |

@@ -1,0 +1,54 @@
+<!--
+  SKSRJ Timetable generator
+  Copyright (C) 2026 Oskar Jagodziński
+
+  This program is free software: you can redistribute it and/or modify it under the terms of
+  the GNU General Public License as published by the Free Software Foundation, either version 3
+  of the License, or (at your option) any later version, together with the additional terms
+  under Section 7 of that License (see the files LICENSE and ADDITIONAL_TERMS).
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+  Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+  Original source: https://github.com/Hirek193/sksrj
+-->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Sksrj.App.ViewModels"
+        x:Class="Sksrj.App.Views.MaSzynaImportWindow"
+        x:DataType="vm:MaSzynaImportViewModel"
+        Width="600" SizeToContent="Height" CanResize="False" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource Md.SurfaceContainerHigh}" Title="Import rozkładu MaSzyny – SKSRJ Timetable generator">
+  <StackPanel Margin="24,20,24,20" Spacing="14">
+    <StackPanel Spacing="4">
+      <TextBlock Classes="headline" FontSize="22" Text="Import rozkładu MaSzyny" />
+      <TextBlock Classes="body-small" Text="{Binding FileName}" />
+    </StackPanel>
+    <Border Classes="card" Background="{DynamicResource Md.Surface}">
+      <StackPanel Spacing="8">
+        <TextBlock Text="{Binding Summary}" FontWeight="Medium" TextWrapping="Wrap" />
+        <ScrollViewer MaxHeight="110">
+          <TextBlock Classes="body-small" Text="{Binding StationsText}" TextWrapping="Wrap" />
+        </ScrollViewer>
+        <TextBlock IsVisible="{Binding HasWarnings}" Text="{Binding WarningsText}" Foreground="{DynamicResource Md.Error}" FontSize="12" TextWrapping="Wrap" />
+      </StackPanel>
+    </Border>
+    <Grid ColumnDefinitions="140,12,*">
+      <HeaderedContentControl Classes="field" Header="Nr linii">
+        <TextBox Text="{Binding LineNumber}" Watermark="np. 25" />
+      </HeaderedContentControl>
+      <HeaderedContentControl Grid.Column="2" Classes="field" Header="Nazwa linii (dla nowej linii)">
+        <TextBox Text="{Binding LineName}" />
+      </HeaderedContentControl>
+    </Grid>
+    <TextBlock Classes="body-small" TextWrapping="Wrap"
+               Text="Plik rozkładu MaSzyny nie zawiera numeru linii – podaj go. Jeśli linia o tym numerze jest już na schemacie, odcinki zostaną do niej dodane." />
+    <CheckBox IsChecked="{Binding MergeByName}" Content="Łącz z istniejącymi posterunkami schematu o tej samej nazwie" />
+    <CheckBox IsChecked="{Binding CreateTimetable}" Content="Utwórz kartę pociągu z godzinami, czasami jazdy i składem z pliku" />
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,6,0,0">
+      <Button Content="Anuluj" Click="OnCancel" />
+      <Button Classes="filled" Content="Importuj" Click="OnOk" />
+    </StackPanel>
+  </StackPanel>
+</Window>
