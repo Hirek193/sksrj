@@ -41,6 +41,58 @@
         </Grid>
       </Border>
 
+      <CheckBox IsChecked="{Binding SelectedTimetable.CapSpeedsToVmax}"
+                Content="Prędkości w kolumnach 3–4 ograniczone do prędkości maksymalnej pociągu (Vmax z kolumny 9)" />
+
+      <!-- tor jazdy na szlakach między posterunkami (trasa ze schematu) -->
+      <Border Classes="card" IsVisible="{Binding IsRouteLinked}">
+        <StackPanel Spacing="10">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <mi:MaterialIcon Kind="SwapHorizontalBold" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" Margin="0,0,10,0" />
+            <TextBlock Grid.Column="1" Classes="title-medium" Text="Tor jazdy między posterunkami" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+              <TextBlock Classes="label" Text="Wszystkie:" VerticalAlignment="Center" />
+              <Button Classes="small" Content="prawy" Command="{Binding SetAllTracksCommand}" CommandParameter="Right" />
+              <Button Classes="small" Content="lewy" Command="{Binding SetAllTracksCommand}" CommandParameter="Left" />
+            </StackPanel>
+          </Grid>
+          <TextBlock Classes="body-small" TextWrapping="Wrap" Text="Każdy szlak trasy jest osobnym odcinkiem – wybierz tor dla dowolnego fragmentu. W karcie kolejne odcinki tej samej linii drukowane są razem; strzałka przechodzi między kolumnami 2|3 i 4|5 w miejscu zmiany toru." />
+          <Grid ColumnDefinitions="*,70,150,190" Margin="4,4,4,0">
+            <TextBlock Classes="label" Text="Szlak" />
+            <TextBlock Grid.Column="1" Classes="label" Text="Linia" />
+            <TextBlock Grid.Column="2" Classes="label" Text="Km" />
+            <TextBlock Grid.Column="3" Classes="label" Text="Tor" />
+          </Grid>
+          <ItemsControl ItemsSource="{Binding SelectedTimetable.Sections}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="2" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="m:LineSection">
+                <Border Background="{DynamicResource Md.Surface}" CornerRadius="8" Padding="4,2">
+                  <Grid ColumnDefinitions="*,70,150,190">
+                    <TextBlock Text="{Binding Label}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="13" />
+                    <TextBlock Grid.Column="1" Text="{Binding LineNumber}" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="13" />
+                    <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="13">
+                      <TextBlock.Text>
+                        <MultiBinding StringFormat="{}{0} – {1}">
+                          <Binding Path="KmStart" />
+                          <Binding Path="KmEnd" />
+                        </MultiBinding>
+                      </TextBlock.Text>
+                    </TextBlock>
+                    <ComboBox Grid.Column="3" Classes="cell" HorizontalAlignment="Stretch" SelectedIndex="{Binding Track, Converter={StaticResource EnumIndex}}">
+                      <ComboBoxItem Content="prawy" />
+                      <ComboBoxItem Content="lewy" />
+                    </ComboBox>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Expander Header="Odcinki linii i zmiany prędkości (kolumny 1–4)" IsExpanded="{Binding !IsRouteLinked, Mode=OneWay}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+      <StackPanel Spacing="16">
       <ItemsControl ItemsSource="{Binding SelectedTimetable.Sections}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate><StackPanel Spacing="12" /></ItemsPanelTemplate>
@@ -49,6 +101,7 @@
           <DataTemplate x:DataType="m:LineSection">
             <Border Classes="card">
               <StackPanel Spacing="12">
+                <TextBlock Classes="title-small" Text="{Binding Label}" IsVisible="{Binding Label, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                 <Grid ColumnDefinitions="110,12,130,12,130,12,*,12,Auto">
                   <HeaderedContentControl Classes="field" Header="Nr linii">
                     <TextBox Text="{Binding LineNumber}" FontWeight="SemiBold" />
@@ -120,6 +173,8 @@
       <Button Classes="fab" HorizontalAlignment="Left" Command="{Binding AddSectionCommand}">
         <StackPanel Orientation="Horizontal" Spacing="12"><mi:MaterialIcon Kind="PlaylistPlus" /><TextBlock Text="Dodaj odcinek linii" /></StackPanel>
       </Button>
+      </StackPanel>
+      </Expander>
     </StackPanel>
   </ScrollViewer>
 </UserControl>

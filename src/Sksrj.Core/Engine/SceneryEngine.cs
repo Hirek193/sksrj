@@ -379,6 +379,9 @@ public static class SceneryRouter
         foreach (var c in result) sec.Changes.Add(c);
     }
 
+    private static string Short(SceneryNode? n) =>
+        n == null ? "?" : (n.Name + (string.IsNullOrWhiteSpace(n.EffectiveTypeSuffix) ? "" : " " + n.EffectiveTypeSuffix)).Trim();
+
     private static string LineNo(Scenery sc, SceneryEdge? e) => sc.Line(e?.LineId)?.Number?.Trim() ?? "";
 
     /// <summary>
@@ -390,24 +393,22 @@ public static class SceneryRouter
         var warn = new List<string>(route.Warnings);
         if (!route.Ok) { warn.Add("Trasa jest niekompletna – zaznacz co najmniej początek i koniec na schemacie."); return warn; }
 
-        // ---- odcinki linii
+        // ---- odcinki linii – osobny odcinek dla każdego szlaku między kolejnymi posterunkami
+        //      (by tor jazdy można było wybrać między dowolnymi posterunkami); w karcie kolejne odcinki
+        //      tej samej linii są łączone w jeden.
         var sections = new List<LineSection>();
-        LineSection? cur = null; double curEnd = double.NaN; int curDir = 0;
-        foreach (var hop in route.Hops)
+        for (var h = 0; h < route.Hops.Count; h++)
         {
+            var hop = route.Hops[h];
             var e = hop.Edge;
             Num.TryParseKm(hop.Forward ? e.KmA : e.KmB, out var k0);
             Num.TryParseKm(hop.Forward ? e.KmB : e.KmA, out var k1);
-            var line = LineNo(sc, e);
-            var dir = Math.Sign(k1 - k0);
-            var cont = cur != null && cur.LineNumber == line && Math.Abs(curEnd - k0) < 0.0015 && (curDir == 0 || dir == 0 || dir == curDir);
-            if (!cont)
+            var from = sc.Node(route.Nodes[h]); var to = sc.Node(route.Nodes[h + 1]);
+            var cur = new LineSection
             {
-                cur = new LineSection { LineNumber = line, KmStart = Fmt(k0), KmEnd = Fmt(k1), Track = TrackSide.Right };
-                sections.Add(cur); curDir = dir;
-            }
-            else { cur!.KmEnd = Fmt(k1); if (curDir == 0) curDir = dir; }
-            curEnd = k1;
+                LineNumber = LineNo(sc, e), KmStart = Fmt(k0), KmEnd = Fmt(k1), Track = TrackSide.Right,
+                Label = $"{Short(from)} → {Short(to)}",
+            };
             foreach (var ch in EdgeChanges(sc, e, hop.Forward))
             {
                 var last = cur.Changes.LastOrDefault();
@@ -415,6 +416,7 @@ public static class SceneryRouter
                 if (last != null && last.Km == ch.Km) cur.Changes.Remove(last);
                 cur.Changes.Add(ch);
             }
+            sections.Add(cur);
         }
 
         // ---- tor jazdy wybrany wcześniej w zakładce Trasa

@@ -74,6 +74,10 @@ postojów) i od razu liczy czasy jazdy. Przystanki osobowe otrzymują rodzaj „
 „ph” pojawia się tylko tam, gdzie pociąg pasażerski faktycznie się zatrzymuje. Zmiana zasady postojów
 od razu poprawia kartę. Zakładki **Posterunki** i **Trasa** służą potem do dopracowania szczegółów
 (np. jazda torem lewym); ręczne zmiany są zapamiętywane i nie są nadpisywane przy ponownym ułożeniu trasy.
+Każdy szlak między posterunkami jest osobnym odcinkiem, więc tor prawy / lewy można wybrać dla dowolnego
+fragmentu trasy – w karcie kolejne odcinki tej samej linii drukowane są razem, a strzałka przechodzi
+między kolumnami w miejscu zmiany toru. Prędkości w kolumnach V<sub>P</sub>/V<sub>L</sub> są ograniczane
+do prędkości maksymalnej pociągu (Vmax), zgodnie z Ir-11 § 32 ust. 6 pkt 2 lit. e i f.
 
 ### Ostrzeżenia
 
