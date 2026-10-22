@@ -48,6 +48,7 @@ public sealed class TimetableLayout
     private const double FirstBase = 11.0;   // od góry wiersza do linii bazowej 1. wiersza tekstu
     private const double LastBase = 3.2;     // od dołu wiersza do linii bazowej ostatniego wiersza
     private const double LeftMinCell = 12.0, LeftLabelH = 9.5;
+    private const double NameKmGap = LH / 2;
 
     private const double Thin = 0.5, Frame = 0.75;
 
@@ -92,6 +93,10 @@ public sealed class TimetableLayout
     {
         public int Index; public string Line = ""; public double KmStart, KmEnd, S0, S1; public TrackSide Side;
         public int EvStart, EvEnd;
+        /// <summary>Grupa wyświetlania – kolejne odcinki tej samej linii z ciągłym kilometrażem drukowane są jako jeden.</summary>
+        public int Group;
+        /// <summary>Odcinek kontynuuje poprzedni (ta sama linia, ten sam kilometr) – bez granicy odcinków w kolumnach 1–2.</summary>
+        public bool Continuation;
     }
 
     private sealed class Ev
@@ -103,7 +108,7 @@ public sealed class TimetableLayout
 
     private sealed class Seg
     {
-        public int Sec; public int Ev0, Ev1; public string Vp = "", Vl = ""; public bool Single;
+        public int Sec; public int Ev0, Ev1; public string Vp = "", Vl = ""; public bool Single; public BoldMode Bold;
     }
 
     private sealed class Row
@@ -234,73 +239,147 @@ public sealed class TimetableLayout
     // ================================================================= kolumny 1–4 (odcinki linii, prędkości)
     private static string EffTrain(Seg s, TrackSide side) => s.Single ? s.Vp : side == TrackSide.Right ? s.Vp : s.Vl;
 
+    private static double ParseV(string? v) =>
+        double.TryParse((v ?? "").Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var d) ? d : double.NaN;
+
+    private static string Cap(string v, double vmax)
+    {
+        var d = ParseV(v);
+        if (double.IsNaN(d) || double.IsNaN(vmax) || vmax <= 0 || d <= vmax) return v;
+        return vmax.ToString("0", CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>Prędkość maksymalna pociągu (kol. 9) obowiązująca od kolejnych posterunków – do ograniczania kolumn 3–4.</summary>
+    private List<(double S, double V)> VmaxSteps()
+    {
+        var res = new List<(double, double)>();
+        if (!_t.CapSpeedsToVmax || _t.Points.Count == 0) return res;
+        var g = Engine.RouteGeometry.Build(_t);
+        double cur = double.NaN;
+        for (var i = 0; i < _t.Points.Count && i < g.PointS.Count; i++)
+        {
+            var v = ParseV(_t.Points[i].Vmax);
+            if (double.IsNaN(v) || v <= 0 || v == cur) continue;
+            res.Add((res.Count == 0 ? double.NegativeInfinity : g.PointS[i], v));
+            cur = v;
+        }
+        return res;
+    }
+
     private void BuildSections()
     {
         double s = 0;
+        var vmax = VmaxSteps();
+        double VmaxAt(double x)
+        {
+            var v = double.NaN;
+            foreach (var (s0, vv) in vmax) { if (x >= s0 - 1e-9) v = vv; else break; }
+            return v;
+        }
+        var group = -1;
+        Seg? prevLast = null;
         foreach (var (ls, idx) in _t.Sections.Select((x, i) => (x, i)))
         {
             if (!Num.TryParseKm(ls.KmStart, out var k0)) { _result.Warnings.Add($"Odcinek linii {ls.LineNumber}: niepoprawny km początku „{ls.KmStart}”."); k0 = 0; }
             if (!Num.TryParseKm(ls.KmEnd, out var k1)) { _result.Warnings.Add($"Odcinek linii {ls.LineNumber}: niepoprawny km końca „{ls.KmEnd}”."); k1 = k0; }
             var sec = new Sec { Index = idx, Line = ls.LineNumber?.Trim() ?? "", KmStart = k0, KmEnd = k1, S0 = s, S1 = s + Math.Abs(k1 - k0), Side = ls.Track };
             s = sec.S1;
+            var dir = Math.Sign(k1 - k0);
 
-            // zdarzenie początkowe (wspólne z końcem poprzedniego odcinka)
-            if (_evs.Count == 0)
-                _evs.Add(new Ev { S = sec.S0, Boundary = true, LabelBelow = Num.KmComma(k0), BelowBold = false });
-            else
-            {
-                var e = _evs[^1];
-                e.LabelBelow = Num.KmComma(k0); e.BelowBold = true; e.AboveBold = true; e.Boundary = true;
-            }
-            sec.EvStart = _evs.Count - 1;
+            var prev = _secs.Count > 0 ? _secs[^1] : null;
+            var prevDir = prev == null ? 0 : Math.Sign(prev.KmEnd - prev.KmStart);
+            sec.Continuation = prev != null && string.Equals(prev.Line, sec.Line, StringComparison.OrdinalIgnoreCase)
+                               && Math.Abs(prev.KmEnd - k0) < 0.0015 && (dir == 0 || prevDir == 0 || dir == prevDir);
+            if (!sec.Continuation) group++;
+            sec.Group = group;
 
+            // ---- zmiany prędkości odcinka (+ zmiany Vmax pociągu na posterunkach), ograniczone do Vmax
+            var raw = new List<(double s, string vp, string vl, bool single, BoldMode bold, string? km)>();
             var changes = ls.Changes.ToList();
             if (changes.Count == 0) changes.Add(new SpeedChange { Km = ls.KmStart });
-            Seg? cur = null;
-            var dir = Math.Sign(k1 - k0);
             double lastKm = k0;
             for (var i = 0; i < changes.Count; i++)
             {
                 var ch = changes[i];
                 var vp = (ch.Vp ?? "").Trim(); var vl = (ch.Vl ?? "").Trim();
                 if (ch.SingleTrack && vp.Length == 0) vp = vl;
-                if (i == 0)
-                {
-                    cur = new Seg { Sec = idx, Ev0 = sec.EvStart, Vp = vp, Vl = vl, Single = ch.SingleTrack };
-                    continue;
-                }
+                if (i == 0) { raw.Add((sec.S0, vp, vl, ch.SingleTrack, ch.BoldKm, null)); continue; }
                 if (!Num.TryParseKm(ch.Km, out var km)) { _result.Warnings.Add($"Linia {sec.Line}: niepoprawny km zmiany prędkości „{ch.Km}”."); continue; }
                 var inRange = km >= Math.Min(k0, k1) - 1e-6 && km <= Math.Max(k0, k1) + 1e-6;
                 if (!inRange) _result.Warnings.Add($"Linia {sec.Line}: km {Num.KmDot(km)} poza odcinkiem {Num.KmDot(k0)}–{Num.KmDot(k1)}.");
                 if (dir != 0 && Math.Sign(km - lastKm) == -dir) _result.Warnings.Add($"Linia {sec.Line}: zmiany prędkości nie są uporządkowane w kierunku jazdy (km {Num.KmDot(km)}).");
                 lastKm = km;
-                var sKm = Math.Clamp(sec.S0 + Math.Abs(km - k0), sec.S0, sec.S1);
-                var next = new Seg { Sec = idx, Vp = vp, Vl = vl, Single = ch.SingleTrack };
-                var trainChanged = EffTrain(cur!, sec.Side) != EffTrain(next, sec.Side);
-                var bold = ch.BoldKm switch { BoldMode.Yes => true, BoldMode.No => false, _ => trainChanged };
-                var ev = new Ev { S = sKm, LabelAbove = Num.KmComma(km), AboveBold = bold };
-                _evs.Add(ev);
-                cur!.Ev1 = _evs.Count - 1; _segs.Add(cur);
+                raw.Add((Math.Clamp(sec.S0 + Math.Abs(km - k0), sec.S0, sec.S1), vp, vl, ch.SingleTrack, ch.BoldKm, Num.KmComma(km)));
+            }
+            foreach (var (vs, _) in vmax)
+            {
+                if (vs <= sec.S0 + 1e-6 || vs >= sec.S1 - 1e-6) continue;
+                var baseC = raw.Last(r => r.s <= vs + 1e-9);
+                raw.Add((vs, baseC.vp, baseC.vl, baseC.single, BoldMode.Auto, Num.KmComma(k0 + (dir == 0 ? 1 : dir) * (vs - sec.S0))));
+            }
+            raw = raw.OrderBy(r => r.s).ToList();
+            var segsIn = raw.Select(r =>
+            {
+                var v = VmaxAt(r.s);
+                return (r.s, seg: new Seg { Sec = idx, Vp = Cap(r.vp, v), Vl = Cap(r.vl, v), Single = r.single, Bold = r.bold }, r.km);
+            }).ToList();
+
+            // ---- zdarzenie początkowe
+            var first = segsIn[0].seg;
+            if (_evs.Count == 0)
+                _evs.Add(new Ev { S = sec.S0, Boundary = true, LabelBelow = Num.KmComma(k0), BelowBold = false });
+            else if (!sec.Continuation)
+            {
+                var e = _evs[^1];
+                e.LabelBelow = Num.KmComma(k0); e.BelowBold = true; e.AboveBold = true; e.Boundary = true;
+            }
+            else
+            {
+                // styk odcinków tej samej linii (posterunek): granica tylko wtedy, gdy zmienia się prędkość lub tor jazdy
+                var e = _evs[^1];
+                e.Boundary = false; e.LabelAbove = null; e.AboveBold = false;
+                var changed = prevLast == null || prevLast.Vp != first.Vp || prevLast.Vl != first.Vl || prevLast.Single != first.Single || prev!.Side != sec.Side;
+                if (changed)
+                {
+                    var trainChanged = prevLast == null || EffTrain(prevLast, prev!.Side) != EffTrain(first, sec.Side) || prev!.Side != sec.Side;
+                    e.LabelAbove = Num.KmComma(k0);
+                    e.AboveBold = first.Bold switch { BoldMode.Yes => true, BoldMode.No => false, _ => trainChanged };
+                }
+            }
+            sec.EvStart = _evs.Count - 1;
+
+            Seg cur = first; cur.Ev0 = sec.EvStart;
+            for (var i = 1; i < segsIn.Count; i++)
+            {
+                var (sKm, next, kmText) = segsIn[i];
+                if (next.Vp == cur.Vp && next.Vl == cur.Vl && next.Single == cur.Single) continue; // po ograniczeniu do Vmax bez zmiany
+                var trainChanged = EffTrain(cur, sec.Side) != EffTrain(next, sec.Side);
+                var bold = next.Bold switch { BoldMode.Yes => true, BoldMode.No => false, _ => trainChanged };
+                _evs.Add(new Ev { S = sKm, LabelAbove = kmText, AboveBold = bold });
+                cur.Ev1 = _evs.Count - 1; _segs.Add(cur);
                 next.Ev0 = _evs.Count - 1;
                 cur = next;
             }
             // zdarzenie końcowe
             _evs.Add(new Ev { S = sec.S1, Boundary = true, LabelAbove = Num.KmComma(k1), AboveBold = false });
             sec.EvEnd = _evs.Count - 1;
-            cur!.Ev1 = sec.EvEnd; _segs.Add(cur);
+            cur.Ev1 = sec.EvEnd; _segs.Add(cur);
+            prevLast = cur;
             _secs.Add(sec);
         }
-        // pogrubienie kilometrów granicznych: wewnętrzne granice odcinków pogrubione
+        // pogrubienie kilometrów granicznych: wewnętrzne granice odcinków (zmiana linii / kilometrażu) pogrubione
         for (var i = 0; i < _secs.Count; i++)
         {
-            if (i > 0) _evs[_secs[i].EvStart].BelowBold = true;
-            if (i < _secs.Count - 1) _evs[_secs[i].EvEnd].AboveBold = true;
+            if (i > 0 && !_secs[i].Continuation) _evs[_secs[i].EvStart].BelowBold = true;
+            if (i < _secs.Count - 1 && !_secs[i + 1].Continuation) _evs[_secs[i].EvEnd].AboveBold = true;
         }
         // minimalne odstępy
         for (var j = 1; j < _evs.Count; j++)
         {
-            var need = (_evs[j - 1].LabelBelow != null ? LeftLabelH : 0) + (_evs[j].LabelAbove != null ? LeftLabelH : 0) + 0.5;
-            _evs[j].Gap = Math.Max(LeftMinCell, need);
+            var below = _evs[j - 1].LabelBelow != null; var above = _evs[j].LabelAbove != null;
+            var need = (below ? LeftLabelH : 0) + (above ? LeftLabelH : 0) + 0.5;
+            var unlabeledJunction = (!_evs[j].Boundary && !above && _evs[j].LabelBelow == null) || (!_evs[j - 1].Boundary && _evs[j - 1].LabelAbove == null && !below);
+            _evs[j].Gap = unlabeledJunction ? (above ? need : 0) : Math.Max(LeftMinCell, need);
         }
     }
 
@@ -358,7 +437,8 @@ public sealed class TimetableLayout
 
             r.Lines = Math.Max(2, r.TopLines.Count + r.BottomLines.Count);
             if (r.Box != null) r.Lines = Math.Max(3, r.Lines);
-            r.H = FirstBase + (r.Lines - 1) * LH + LastBase;
+            // jak we wzorze karty: między nazwą posterunku a kilometrem pół wiersza odstępu
+            r.H = FirstBase + (r.Lines - 1) * LH + NameKmGap + LastBase;
             _rows.Add(r);
         }
 
@@ -629,8 +709,10 @@ public sealed class TimetableLayout
         for (var k = 0; k < 3; k++) c.Text((xLok + xObc) / 2, t + third * k + third / 2 + 2.1, lok[k], FColSmall, Align.Center);
         c.HLine(xLok, xObc, t + third, Thin); c.HLine(xLok, xObc, t + 2 * third, Thin);
         c.VLine(xObc, t, b, Thin);
-        c.Text((xObc + xVmax) / 2, t + 8.6, "Obc.lok", FColSmall, Align.Center);
-        c.Text((xObc + xVmax) / 2, t + 19.6, "Dł.Poc.", FColSmall, Align.Center);
+        var halfH = (b - t) / 2;
+        c.Text((xObc + xVmax) / 2, t + halfH / 2 + 2.1, "Obc.lok", FColSmall, Align.Center);
+        c.HLine(xObc, xVmax, t + halfH, Thin);
+        c.Text((xObc + xVmax) / 2, t + halfH + halfH / 2 + 2.1, "Dł.Poc.", FColSmall, Align.Center);
         c.VLine(xVmax, t, b, Thin);
         string[] vm = { "Vmax", "%", "Rodz.h" };
         for (var k = 0; k < 3; k++) c.Text((xVmax + xEnd) / 2, t + third * k + third / 2 + 2.1, vm[k], FColSmall, Align.Center);
@@ -655,14 +737,15 @@ public sealed class TimetableLayout
         }
         bool Inside(double y) => y > Y0 + 0.01 && y < Y1 - 0.01;
 
-        // granice odcinków + numery linii + km graniczne
-        foreach (var sec in _secs)
+        // granice odcinków + numery linii + km graniczne (kolejne odcinki tej samej linii – jedna grupa)
+        foreach (var g in _secs.GroupBy(x => x.Group))
         {
-            double a = _evs[sec.EvStart].Y, b = _evs[sec.EvEnd].Y;
+            var f = g.First(); var l = g.Last();
+            double a = _evs[f.EvStart].Y, b = _evs[l.EvEnd].Y;
             if (b < Y0 - 0.01 || a > Y1 + 0.01) continue;
             if (Inside(a)) c.HLine(xNr, xSt, Py(a), Thin);
             var top = Math.Max(a, Y0);
-            if (Math.Min(b, Y1) - top >= 8) c.Text((xNr + xKm) / 2, Py(top) + 8.3, sec.Line, FLineNr, Align.Center);
+            if (Math.Min(b, Y1) - top >= 8) c.Text((xNr + xKm) / 2, Py(top) + 8.3, f.Line, FLineNr, Align.Center);
         }
         // etykiety km
         foreach (var e in _evs)
@@ -692,14 +775,16 @@ public sealed class TimetableLayout
     private void DrawSpeedColumn(Canvas c, double Y0, double Y1, Func<double, double> Py, bool isVp)
     {
         // łączenie kolejnych segmentów o tej samej wartości w jedną komórkę
-        var cells = new List<(int sec, double a, double b, string text, bool single)>();
+        var cells = new List<(int sec, double a, double b, string text, bool single, bool bold)>();
         foreach (var s in _segs)
         {
             var key = s.Single ? s.Vp : isVp ? s.Vp : s.Vl;
             double a = _evs[s.Ev0].Y, b = _evs[s.Ev1].Y;
-            if (cells.Count > 0 && cells[^1].sec == s.Sec && cells[^1].text == key && cells[^1].single == s.Single && Math.Abs(cells[^1].b - a) < 1e-6)
-                cells[^1] = (s.Sec, cells[^1].a, b, key, s.Single);
-            else cells.Add((s.Sec, a, b, key, s.Single));
+            var side = _secs[s.Sec].Side;
+            var bold = s.Single || (isVp ? side == TrackSide.Right : side == TrackSide.Left);
+            if (cells.Count > 0 && _secs[cells[^1].sec].Group == _secs[s.Sec].Group && cells[^1].text == key && cells[^1].single == s.Single && cells[^1].bold == bold && Math.Abs(cells[^1].b - a) < 1e-6)
+                cells[^1] = (cells[^1].sec, cells[^1].a, b, key, s.Single, bold);
+            else cells.Add((s.Sec, a, b, key, s.Single, bold));
         }
         double x0 = isVp ? xVp : xVl, x1 = isVp ? xVl : xSt;
         foreach (var cell in cells)
@@ -711,9 +796,7 @@ public sealed class TimetableLayout
             if (cell.a > Y0 + 0.01 && cell.a < Y1 - 0.01) c.HLine(x0, xr, Py(cell.a), Thin);
             var top = Math.Max(cell.a, Y0); var bot = Math.Min(cell.b, Y1);
             if (bot - top < 9 || string.IsNullOrEmpty(cell.text)) continue;
-            var side = _secs.First(z => z.Index == cell.sec).Side;
-            var bold = cell.single || (isVp ? side == TrackSide.Right : side == TrackSide.Left);
-            c.Text((x0 + xr) / 2, Py(top) + 9.6, cell.text, bold ? FSpeedB : FSpeed, Align.Center);
+            c.Text((x0 + xr) / 2, Py(top) + 9.6, cell.text, cell.bold ? FSpeedB : FSpeed, Align.Center);
         }
     }
 

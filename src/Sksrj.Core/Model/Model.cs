@@ -99,6 +99,8 @@ public partial class Timetable : ObservableObject
     // ---- dół ostatniej strony ---------------------------------------------------------
     [ObservableProperty] private string _runningDays = "";
     [ObservableProperty] private string _remarks = "";
+    /// <summary>Prędkości w kolumnach 3–4 ograniczone do prędkości maksymalnej pociągu (Vmax, kol. 9) – Ir-11 § 32 ust. 6 pkt 2 lit. e, f.</summary>
+    [ObservableProperty] private bool _capSpeedsToVmax = true;
 
     public ObservableCollection<Footnote> Footnotes { get; set; } = new();
     public ObservableCollection<LineSection> Sections { get; set; } = new();
@@ -156,6 +158,8 @@ public partial class LineSection : ObservableObject
     [ObservableProperty] private string _kmStart = "0.000";
     [ObservableProperty] private string _kmEnd = "0.000";
     [ObservableProperty] private TrackSide _track = TrackSide.Right;
+    /// <summary>Opis odcinka w edytorze (np. „Kaletnik → Młynów”) – nie jest drukowany.</summary>
+    [ObservableProperty] private string _label = "";
 
     /// <summary>Punkty zmiany dopuszczalnej prędkości (kolumny 2–4). Pierwszy wpis określa prędkość od początku odcinka.</summary>
     public ObservableCollection<SpeedChange> Changes { get; set; } = new();

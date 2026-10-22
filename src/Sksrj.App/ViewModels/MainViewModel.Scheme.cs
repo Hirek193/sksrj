@@ -382,6 +382,14 @@ public partial class MainViewModel
     }
 
     [RelayCommand]
+    private void SetAllTracks(string side)
+    {
+        var t = SelectedTimetable; if (t == null) return;
+        var v = side == "Left" ? TrackSide.Left : TrackSide.Right;
+        foreach (var s in t.Sections) s.Track = v;
+    }
+
+    [RelayCommand]
     private void ResetManualStop()
     {
         var t = SelectedTimetable; var p = SelectedPoint;
