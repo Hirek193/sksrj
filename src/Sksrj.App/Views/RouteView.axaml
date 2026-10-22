@@ -1,0 +1,104 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sksrj.App.ViewModels"
+             xmlns:m="using:Sksrj.Core.Model"
+             xmlns:mi="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Sksrj.App.Views.RouteView"
+             x:DataType="vm:MainViewModel">
+  <ScrollViewer IsVisible="{Binding HasTimetable}">
+    <StackPanel Margin="28,24,28,40" Spacing="16" MaxWidth="980">
+      <StackPanel Spacing="4">
+        <TextBlock Classes="headline" Text="Trasa – linie i prędkości" />
+        <TextBlock Classes="body-small" TextWrapping="Wrap"
+                   Text="Kolumny 1–4 karty: kolejne odcinki linii kolejowych w kierunku jazdy pociągu, kilometraż zmian dopuszczalnej prędkości oraz prędkości po torze prawym (VP) i lewym (VL)." />
+      </StackPanel>
+      <Border Classes="info">
+        <Grid ColumnDefinitions="Auto,*">
+          <mi:MaterialIcon Kind="InformationOutline" Width="20" Height="20" VerticalAlignment="Top" Margin="0,0,12,0" Foreground="{DynamicResource Md.OnSecondaryContainer}" />
+          <TextBlock Grid.Column="1" TextWrapping="Wrap" FontSize="13"
+                     Text="Pierwsza zmiana w odcinku określa prędkość od jego początku. „Jednotorowy” łączy kolumny 3 i 4. Tor prawy rysuje strzałkę między kolumną 2 i 3, tor lewy – między 4 i 5. Km zmiany pogrubiany jest automatycznie, gdy zmienia się prędkość po torze, dla którego opracowano rozkład. Posterunki przypisywane są do odcinków na podstawie swojego kilometra." />
+        </Grid>
+      </Border>
+
+      <ItemsControl ItemsSource="{Binding SelectedTimetable.Sections}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate><StackPanel Spacing="12" /></ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="m:LineSection">
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <Grid ColumnDefinitions="110,12,130,12,130,12,*,12,Auto">
+                  <HeaderedContentControl Classes="field" Header="Nr linii">
+                    <TextBox Text="{Binding LineNumber}" FontWeight="SemiBold" />
+                  </HeaderedContentControl>
+                  <HeaderedContentControl Grid.Column="2" Classes="field" Header="Km początku">
+                    <TextBox Text="{Binding KmStart}" />
+                  </HeaderedContentControl>
+                  <HeaderedContentControl Grid.Column="4" Classes="field" Header="Km końca">
+                    <TextBox Text="{Binding KmEnd}" />
+                  </HeaderedContentControl>
+                  <HeaderedContentControl Grid.Column="6" Classes="field" Header="Jazda po torze">
+                    <ComboBox SelectedIndex="{Binding Track, Converter={StaticResource EnumIndex}}">
+                      <ComboBoxItem Content="prawy – kierunek zasadniczy" />
+                      <ComboBoxItem Content="lewy – kierunek przeciwny" />
+                    </ComboBox>
+                  </HeaderedContentControl>
+                  <StackPanel Grid.Column="8" Orientation="Horizontal" VerticalAlignment="Bottom">
+                    <Button Classes="icon" ToolTip.Tip="W górę" Command="{ReflectionBinding $parent[UserControl].DataContext.MoveSectionUpCommand}" CommandParameter="{Binding}"><mi:MaterialIcon Kind="ArrowUp" /></Button>
+                    <Button Classes="icon" ToolTip.Tip="W dół" Command="{ReflectionBinding $parent[UserControl].DataContext.MoveSectionDownCommand}" CommandParameter="{Binding}"><mi:MaterialIcon Kind="ArrowDown" /></Button>
+                    <Button Classes="icon danger" ToolTip.Tip="Usuń odcinek" Command="{ReflectionBinding $parent[UserControl].DataContext.RemoveSectionCommand}" CommandParameter="{Binding}"><mi:MaterialIcon Kind="DeleteOutline" /></Button>
+                  </StackPanel>
+                </Grid>
+
+                <Border Background="{DynamicResource Md.Surface}" CornerRadius="12" Padding="12,8">
+                  <StackPanel Spacing="4">
+                    <Grid ColumnDefinitions="130,10,90,10,90,10,150,10,160,*,Auto" Margin="0,0,0,2">
+                      <TextBlock Classes="label" Text="Km zmiany" />
+                      <TextBlock Grid.Column="2" Classes="label" Text="VP [km/h]" />
+                      <TextBlock Grid.Column="4" Classes="label" Text="VL [km/h]" />
+                      <TextBlock Grid.Column="6" Classes="label" Text="Odcinek" />
+                      <TextBlock Grid.Column="8" Classes="label" Text="Pogrubienie km" />
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding Changes}">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><StackPanel Spacing="6" /></ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="m:SpeedChange">
+                          <Grid ColumnDefinitions="130,10,90,10,90,10,150,10,160,*,Auto">
+                            <TextBox Classes="cell" Text="{Binding Km}" />
+                            <TextBox Grid.Column="2" Classes="cell" Text="{Binding Vp}" FontWeight="SemiBold" />
+                            <TextBox Grid.Column="4" Classes="cell" Text="{Binding Vl}" IsEnabled="{Binding !SingleTrack}" />
+                            <CheckBox Grid.Column="6" IsChecked="{Binding SingleTrack}" Content="jednotorowy" />
+                            <ComboBox Grid.Column="8" Classes="cell" SelectedIndex="{Binding BoldKm, Converter={StaticResource EnumIndex}}">
+                              <ComboBoxItem Content="automatycznie" />
+                              <ComboBoxItem Content="tak" />
+                              <ComboBoxItem Content="nie" />
+                            </ComboBox>
+                            <Button Grid.Column="10" Classes="icon small" ToolTip.Tip="Usuń zmianę"
+                                    Command="{ReflectionBinding $parent[UserControl].DataContext.RemoveChangeCommand}" CommandParameter="{Binding}">
+                              <mi:MaterialIcon Kind="Close" />
+                            </Button>
+                          </Grid>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button Classes="small" HorizontalAlignment="Left" Margin="0,4,0,0"
+                            Command="{ReflectionBinding $parent[UserControl].DataContext.AddChangeCommand}" CommandParameter="{Binding}">
+                      <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="Plus" /><TextBlock Text="Zmiana prędkości" /></StackPanel>
+                    </Button>
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <Button Classes="fab" HorizontalAlignment="Left" Command="{Binding AddSectionCommand}">
+        <StackPanel Orientation="Horizontal" Spacing="12"><mi:MaterialIcon Kind="PlaylistPlus" /><TextBlock Text="Dodaj odcinek linii" /></StackPanel>
+      </Button>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

@@ -1,0 +1,241 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sksrj.App.ViewModels"
+             xmlns:m="using:Sksrj.Core.Model"
+             xmlns:dict="using:Sksrj.Core.Dictionaries"
+             xmlns:mi="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Sksrj.App.Views.PointsView"
+             x:DataType="vm:MainViewModel">
+  <UserControl.Resources>
+    <!-- lista kodów w menu rozwijanym -->
+    <DataTemplate x:Key="CodeButton" x:DataType="dict:CodeEntry">
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <TextBlock Text="{Binding Code}" FontWeight="SemiBold" Width="56" />
+        <TextBlock Text="{Binding Description}" TextWrapping="Wrap" MaxWidth="320" FontSize="12" Classes="muted" />
+      </StackPanel>
+    </DataTemplate>
+  </UserControl.Resources>
+
+  <Grid ColumnDefinitions="340,*" IsVisible="{Binding HasTimetable}">
+
+    <!-- ========================================== lista posterunków -->
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="16,20,8,16">
+      <StackPanel Margin="12,0,0,8" Spacing="2">
+        <TextBlock Classes="headline" Text="Posterunki" />
+        <TextBlock Classes="body-small" Text="Kolumny 5–9 – w kolejności jazdy" />
+      </StackPanel>
+      <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="2" Margin="4,0,0,6">
+        <Button Classes="icon" Command="{Binding AddPointCommand}" ToolTip.Tip="Dodaj posterunek za zaznaczonym"><mi:MaterialIcon Kind="PlaylistPlus" /></Button>
+        <Button Classes="icon" Command="{Binding DuplicatePointCommand}" ToolTip.Tip="Powiel posterunek"><mi:MaterialIcon Kind="ContentCopy" /></Button>
+        <Button Classes="icon" Command="{Binding MovePointUpCommand}" ToolTip.Tip="Przesuń w górę"><mi:MaterialIcon Kind="ArrowUp" /></Button>
+        <Button Classes="icon" Command="{Binding MovePointDownCommand}" ToolTip.Tip="Przesuń w dół"><mi:MaterialIcon Kind="ArrowDown" /></Button>
+        <Button Classes="icon danger" Command="{Binding DeletePointCommand}" ToolTip.Tip="Usuń posterunek"><mi:MaterialIcon Kind="DeleteOutline" /></Button>
+      </StackPanel>
+      <Border Grid.Row="2" Classes="card" Padding="6">
+        <ListBox Classes="list" ItemsSource="{Binding SelectedTimetable.Points}" SelectedItem="{Binding SelectedPoint}">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="m:RoutePoint">
+              <Grid ColumnDefinitions="Auto,*">
+                <mi:MaterialIcon Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center" Kind="RecordCircleOutline"
+                                 Foreground="{DynamicResource Md.Primary}" IsVisible="{Binding Bold}" />
+                <mi:MaterialIcon Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center" Kind="CircleSmall"
+                                 Foreground="{DynamicResource Md.OnSurfaceVariant}" IsVisible="{Binding !Bold}" />
+                <StackPanel Grid.Column="1" Spacing="1">
+                  <TextBlock Text="{Binding ListTitle}" FontSize="14" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="{Binding ListSubtitle}" FontSize="12" Classes="muted" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Border>
+      <StackPanel Grid.Row="3" Spacing="8" Margin="0,12,0,0">
+        <Button Classes="tonal" HorizontalAlignment="Stretch" Command="{Binding RecalcTimesCommand}"
+                ToolTip.Tip="Od odjazdu z pierwszego posterunku: + czas jazdy normalny, + czas postoju na posterunkach z postojem">
+          <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="ClockFast" /><TextBlock Text="Przelicz godziny z czasów jazdy" /></StackPanel>
+        </Button>
+        <Button Classes="outlined" HorizontalAlignment="Stretch" Command="{Binding RecalcTravelCommand}"
+                ToolTip.Tip="Czas jazdy normalny = różnica godzin między kolejnymi posterunkami">
+          <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="TimerOutline" /><TextBlock Text="Czasy jazdy z godzin" /></StackPanel>
+        </Button>
+      </StackPanel>
+    </Grid>
+
+    <!-- ========================================== szczegóły posterunku -->
+    <ScrollViewer Grid.Column="1" IsVisible="{Binding HasSelectedPoint}">
+      <StackPanel Margin="12,20,28,40" Spacing="16" MaxWidth="900" DataContext="{Binding SelectedPoint}" x:DataType="m:RoutePoint">
+
+        <!-- posterunek -->
+        <Border Classes="card">
+          <StackPanel Spacing="14">
+            <Grid ColumnDefinitions="Auto,*">
+              <Border Classes="badge" Margin="0,0,12,0">
+                <TextBlock Text="{ReflectionBinding $parent[UserControl].DataContext.SelectedPointNumber}" />
+              </Border>
+              <TextBlock Grid.Column="1" Classes="title-medium" Text="Posterunek (kolumna 5)" VerticalAlignment="Center" />
+            </Grid>
+            <HeaderedContentControl Classes="field" Header="Nazwa">
+              <TextBox Text="{Binding Name}" FontWeight="SemiBold" />
+            </HeaderedContentControl>
+            <Grid ColumnDefinitions="*,12,*">
+              <HeaderedContentControl Classes="field" Header="Rodzaj posterunku (za nazwą)">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBox Text="{Binding TypeSuffix}" Watermark="np. po, pzs, podg, stth" />
+                  <Button Grid.Column="1" Classes="icon" ToolTip.Tip="Wybierz rodzaj">
+                    <mi:MaterialIcon Kind="MenuDown" />
+                    <Button.Flyout>
+                      <Flyout Placement="BottomEdgeAlignedRight">
+                        <ListBox Classes="list" ItemsSource="{x:Static dict:Ir11.PointTypes}" ItemTemplate="{StaticResource CodeButton}" Width="440" MaxHeight="440" SelectionChanged="OnTypePicked" />
+                      </Flyout>
+                    </Button.Flyout>
+                  </Button>
+                </Grid>
+              </HeaderedContentControl>
+              <HeaderedContentControl Grid.Column="2" Classes="field" Header="Rodzaj postoju (po „;”)">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBox Text="{Binding StopKinds}" Watermark="np. ph, pt, pn,pm" />
+                  <Button Grid.Column="1" Classes="icon" ToolTip.Tip="Dodaj rodzaj postoju">
+                    <mi:MaterialIcon Kind="MenuDown" />
+                    <Button.Flyout>
+                      <Flyout Placement="BottomEdgeAlignedRight">
+                        <ListBox Classes="list" ItemsSource="{x:Static dict:Ir11.StopKinds}" ItemTemplate="{StaticResource CodeButton}" Width="440" SelectionChanged="OnStopKindPicked" />
+                      </Flyout>
+                    </Button.Flyout>
+                  </Button>
+                </Grid>
+              </HeaderedContentControl>
+            </Grid>
+            <WrapPanel Orientation="Horizontal">
+              <CheckBox IsChecked="{Binding Bold}" Content="Stacja – nazwa pogrubiona" Margin="0,0,24,0" />
+              <CheckBox IsChecked="{Binding Uppercase}" Content="Stacja węzłowa – WERSALIKI" />
+            </WrapPanel>
+            <Grid ColumnDefinitions="*,12,*">
+              <HeaderedContentControl Classes="field" Header="Kilometraż osi posterunku">
+                <TextBox Text="{Binding Km}" Watermark="np. 7.094 lub 8.317/1.558 (zmiana linii)" />
+              </HeaderedContentControl>
+              <HeaderedContentControl Grid.Column="2" Classes="field" Header="Nr linii (opcjonalnie)">
+                <TextBox Text="{Binding Line}" Watermark="pusty = dopasowanie automatyczne" />
+              </HeaderedContentControl>
+            </Grid>
+            <HeaderedContentControl Classes="field" Header="Skróty i znaki umowne (do prawej; Enter = kolejny wiersz nad kilometrem)">
+              <Grid ColumnDefinitions="*,8,Auto">
+                <TextBox Classes="multiline" MinHeight="58" Text="{Binding Abbreviations}" Watermark="np. *1), R1, RT, H, SS" />
+                <Button Grid.Column="2" Classes="tonal" VerticalAlignment="Top">
+                  <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="Plus" /><TextBlock Text="Wstaw" /></StackPanel>
+                  <Button.Flyout>
+                    <Flyout Placement="BottomEdgeAlignedRight">
+                      <ListBox Classes="list" ItemsSource="{x:Static dict:Ir11.Abbreviations}" ItemTemplate="{StaticResource CodeButton}" Width="460" MaxHeight="480" SelectionChanged="OnAbbreviationPicked" />
+                    </Flyout>
+                  </Button.Flyout>
+                </Button>
+              </Grid>
+            </HeaderedContentControl>
+            <Grid ColumnDefinitions="*,12,*">
+              <HeaderedContentControl Classes="field" Header="Kursywa nad nazwą">
+                <TextBox Text="{Binding NoteTop}" Watermark="np. 0.346/6.754" FontStyle="Italic" />
+              </HeaderedContentControl>
+              <HeaderedContentControl Grid.Column="2" Classes="field" Header="Kursywa pod kilometrem">
+                <TextBox Text="{Binding NoteBottom}" Watermark="np. -0.146/12.493" FontStyle="Italic" />
+              </HeaderedContentControl>
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <!-- godziny -->
+        <Border Classes="card">
+          <StackPanel Spacing="14">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <mi:MaterialIcon Kind="ClockOutline" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+              <TextBlock Classes="title-medium" Text="Godziny i czasy jazdy (kolumna 6)" VerticalAlignment="Center" />
+            </StackPanel>
+            <Grid ColumnDefinitions="*,12,*,12,*">
+              <HeaderedContentControl Classes="field" Header="Przyjazd">
+                <TextBox Text="{Binding Arrival}" Watermark="gg:mm lub gg:mm.d" />
+              </HeaderedContentControl>
+              <HeaderedContentControl Grid.Column="2" Classes="field" Header="Odjazd / przejazd">
+                <TextBox Text="{Binding Departure}" Watermark="np. 05:48.5 → 05:48⁵" />
+              </HeaderedContentControl>
+              <HeaderedContentControl Grid.Column="4" Classes="field" Header="Czas postoju [min]">
+                <TextBox Text="{Binding Dwell}" Watermark="do przeliczania" IsEnabled="{Binding Stop}" />
+              </HeaderedContentControl>
+            </Grid>
+            <CheckBox IsChecked="{Binding Stop}" Content="Postój rozkładowy (przyjazd i odjazd pogrubione)" />
+            <Grid ColumnDefinitions="*,12,*">
+              <HeaderedContentControl Classes="field" Header="Czas jazdy normalny (licznik) [min]">
+                <TextBox Text="{Binding TravelNormal}" Watermark="np. 3.5 → 3⁵" />
+              </HeaderedContentControl>
+              <HeaderedContentControl Grid.Column="2" Classes="field" Header="Czas jazdy skrócony (mianownik) [min]">
+                <TextBox Text="{Binding TravelShort}" Watermark="np. 3.4" />
+              </HeaderedContentControl>
+            </Grid>
+            <TextBlock Classes="body-small" TextWrapping="Wrap"
+                       Text="Pierwszy posterunek: drukowany jest tylko odjazd, ostatni: tylko przyjazd. Bez postoju drukowana jest pionowa kreska i godzina przejazdu. Czasy jazdy dotyczą odcinka od poprzedniego posterunku." />
+          </StackPanel>
+        </Border>
+
+        <!-- pociąg i szlak -->
+        <Border Classes="card">
+          <StackPanel Spacing="14">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <mi:MaterialIcon Kind="SwapHorizontal" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+              <TextBlock Classes="title-medium" Text="Numer pociągu i szlak" VerticalAlignment="Center" />
+            </StackPanel>
+            <Grid ColumnDefinitions="*,12,*,12,1.4*">
+              <HeaderedContentControl Classes="field" Header="Zmiana rodzaju pociągu od posterunku">
+                <AutoCompleteBox Text="{Binding TrainCategory}" ItemsSource="{x:Static dict:Ir11.TrainCategoryCodes}"
+                                 FilterMode="StartsWithOrdinal" MinimumPrefixLength="0" Watermark="puste = bez zmiany"
+                                 ValueMemberBinding="{Binding Code, x:DataType=dict:CodeEntry}" ItemTemplate="{StaticResource CodeButton}" />
+              </HeaderedContentControl>
+              <HeaderedContentControl Grid.Column="2" Classes="field" Header="Zmiana numeru od posterunku">
+                <TextBox Text="{Binding TrainNumber}" Watermark="puste = bez zmiany" />
+              </HeaderedContentControl>
+              <HeaderedContentControl Grid.Column="4" Classes="field" Header="Szlak do następnego posterunku">
+                <ComboBox SelectedIndex="{Binding TracksToNext, Converter={StaticResource EnumIndex}}">
+                  <ComboBoxItem Content="dwu- lub więcej torowy (II)" />
+                  <ComboBoxItem Content="jednotorowy (I – linia gruba)" />
+                </ComboBox>
+              </HeaderedContentControl>
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <!-- skład -->
+        <Border Classes="card">
+          <StackPanel Spacing="14">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <mi:MaterialIcon Kind="TrainCarPassenger" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+              <TextBlock Classes="title-medium" Text="Pojazdy, obciążenie i hamowanie (kolumny 7–9)" VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock Classes="body-small" TextWrapping="Wrap" Text="Puste pole = bez zmian względem poprzedniego posterunku (na karcie wartość powtarzana szarym kolorem). Zmienione wartości drukowane są na czarno." />
+            <Grid ColumnDefinitions="*,12,*,12,*">
+              <HeaderedContentControl Classes="field" Header="Lok I"><TextBox Text="{Binding Loco1}" Watermark="np. EU07" /></HeaderedContentControl>
+              <HeaderedContentControl Grid.Column="2" Classes="field" Header="Lok II"><TextBox Text="{Binding Loco2}" /></HeaderedContentControl>
+              <HeaderedContentControl Grid.Column="4" Classes="field" Header="Lok III"><TextBox Text="{Binding Loco3}" /></HeaderedContentControl>
+            </Grid>
+            <Grid ColumnDefinitions="*,12,*">
+              <HeaderedContentControl Classes="field" Header="Obciążenie lokomotywy [t]"><TextBox Text="{Binding LocoLoad}" /></HeaderedContentControl>
+              <HeaderedContentControl Grid.Column="2" Classes="field" Header="Długość pociągu [m]"><TextBox Text="{Binding TrainLength}" /></HeaderedContentControl>
+            </Grid>
+            <Grid ColumnDefinitions="*,12,*,12,*">
+              <HeaderedContentControl Classes="field" Header="Vmax składu [km/h]"><TextBox Text="{Binding Vmax}" /></HeaderedContentControl>
+              <HeaderedContentControl Grid.Column="2" Classes="field" Header="Wymagany % masy hamującej"><TextBox Text="{Binding BrakePercent}" /></HeaderedContentControl>
+              <HeaderedContentControl Grid.Column="4" Classes="field" Header="Rodzaj hamulca">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBox Text="{Binding BrakeType}" Watermark="P, R, R+MG, G" />
+                  <Button Grid.Column="1" Classes="icon">
+                    <mi:MaterialIcon Kind="MenuDown" />
+                    <Button.Flyout>
+                      <Flyout Placement="BottomEdgeAlignedRight">
+                        <ListBox Classes="list" ItemsSource="{x:Static dict:Ir11.BrakeTypes}" ItemTemplate="{StaticResource CodeButton}" Width="400" SelectionChanged="OnBrakePicked" />
+                      </Flyout>
+                    </Button.Flyout>
+                  </Button>
+                </Grid>
+              </HeaderedContentControl>
+            </Grid>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

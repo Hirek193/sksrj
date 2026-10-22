@@ -1,0 +1,107 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sksrj.App.ViewModels"
+             xmlns:dict="using:Sksrj.Core.Dictionaries"
+             xmlns:mi="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Sksrj.App.Views.PrintView"
+             x:DataType="vm:MainViewModel">
+  <ScrollViewer>
+    <StackPanel Margin="28,24,28,40" Spacing="16" MaxWidth="980">
+      <StackPanel Spacing="4">
+        <TextBlock Classes="headline" Text="Wydruk i projekt" />
+        <TextBlock Classes="body-small" Text="Ustawienia wspólne dla wszystkich kart w projekcie." />
+      </StackPanel>
+
+      <Border Classes="card">
+        <StackPanel Spacing="12">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <mi:MaterialIcon Kind="FileDocumentMultipleOutline" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+            <TextBlock Classes="title-medium" Text="Układ arkuszy PDF" VerticalAlignment="Center" />
+          </StackPanel>
+          <RadioButton GroupName="layout" IsChecked="{Binding LayoutA5}">
+            <StackPanel>
+              <TextBlock Text="A5 pionowo – każda strona karty na osobnym arkuszu" />
+              <TextBlock Classes="body-small" Text="Do wydruku na A5 lub do przeglądania na tablecie w kabinie symulatora." />
+            </StackPanel>
+          </RadioButton>
+          <RadioButton GroupName="layout" IsChecked="{Binding LayoutA4}">
+            <StackPanel>
+              <TextBlock Text="A4 poziomo – dwie strony A5 obok siebie" />
+              <TextBlock Classes="body-small" Text="Układ jak we wzorze z Załącznika 5 do Ir-11 (strona tytułowa + strona 2, strony 3–4 …)." />
+            </StackPanel>
+          </RadioButton>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="12">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <mi:MaterialIcon Kind="Stamper" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+            <TextBlock Classes="title-medium" Text="Oznaczenie rozkładu symulacyjnego" VerticalAlignment="Center" />
+          </StackPanel>
+          <ToggleSwitch IsChecked="{Binding Project.Print.SimulationNote}" OnContent="Drukuj dopisek w stopce każdej strony" OffContent="Bez dopisku (wygląd 1:1 z instrukcją)" />
+          <TextBox Text="{Binding Project.Print.SimulationNoteText}" IsEnabled="{Binding Project.Print.SimulationNote}" />
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="12">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <mi:MaterialIcon Kind="FolderCogOutline" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+            <TextBlock Classes="title-medium" Text="Projekt" VerticalAlignment="Center" />
+          </StackPanel>
+          <HeaderedContentControl Classes="field" Header="Nazwa projektu">
+            <TextBox Text="{Binding Project.ProjectName}" />
+          </HeaderedContentControl>
+          <WrapPanel>
+            <ToggleSwitch IsChecked="{Binding IsDark}" OnContent="Motyw ciemny" OffContent="Motyw jasny" Margin="0,0,24,0" />
+            <Button Classes="outlined" Command="{Binding LoadSamplesCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="BookOpenPageVariantOutline" /><TextBlock Text="Wczytaj projekt przykładowy" /></StackPanel>
+            </Button>
+          </WrapPanel>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="10">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <mi:MaterialIcon Kind="TableLarge" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+            <TextBlock Classes="title-medium" Text="Ściąga: skróty rodzaju pociągu (Załącznik 4, str. 6–7)" VerticalAlignment="Center" />
+          </StackPanel>
+          <Grid ColumnDefinitions="*,56,56,56,56,56" Margin="8,4">
+            <TextBlock Classes="label" Text="Rodzaj pociągu" />
+            <TextBlock Grid.Column="1" Classes="label" Text="parowa" />
+            <TextBlock Grid.Column="2" Classes="label" Text="el. lok." />
+            <TextBlock Grid.Column="3" Classes="label" Text="el. zesp." />
+            <TextBlock Grid.Column="4" Classes="label" Text="sp. lok." />
+            <TextBlock Grid.Column="5" Classes="label" Text="sp. zesp." />
+          </Grid>
+          <ItemsControl ItemsSource="{x:Static dict:Ir11.TrainKinds}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="dict:TrainKindRow">
+                <Border BorderBrush="{DynamicResource Md.OutlineVariant}" BorderThickness="0,0,0,1" Padding="8,6">
+                  <Grid ColumnDefinitions="*,56,56,56,56,56">
+                    <StackPanel>
+                      <TextBlock Text="{Binding Kind}" TextWrapping="Wrap" FontSize="13" />
+                      <TextBlock Text="{Binding Group}" FontSize="11" Classes="muted" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="{Binding Steam}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="2" Text="{Binding ElLoco}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="3" Text="{Binding ElEmu}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="4" Text="{Binding DieselLoco}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="5" Text="{Binding DieselDmu}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="info">
+        <TextBlock TextWrapping="Wrap" FontSize="12"
+                   Text="SKSRJ – System konstrukcji symulacyjnych rozkładów jazdy. Wygląd kart wzorowany na Instrukcji o rozkładzie jazdy pociągów Ir-11 (PKP PLK S.A., 2021). Program służy do tworzenia rozkładów na potrzeby symulatorów (np. MaSzyna), także dla tras fikcyjnych. Czcionka kart: Liberation Serif (SIL OFL 1.1)." />
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

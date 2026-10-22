@@ -1,0 +1,27 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mi="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:local="using:Sksrj.App"
+             x:Class="Sksrj.App.App"
+             Name="SKSRJ"
+             RequestedThemeVariant="Light">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://SKSRJ/Styles/Md3Colors.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+      <local:EnumIndexConverter x:Key="EnumIndex" />
+      <local:CountToBoolConverter x:Key="HasItems" />
+    </ResourceDictionary>
+  </Application.Resources>
+  <Application.Styles>
+    <FluentTheme>
+      <FluentTheme.Palettes>
+        <ColorPaletteResources x:Key="Light" Accent="#FF00639B" RegionColor="#FFF8F9FF" ErrorText="#FFBA1A1A" />
+        <ColorPaletteResources x:Key="Dark" Accent="#FF96CCFF" RegionColor="#FF111418" ErrorText="#FFFFB4AB" />
+      </FluentTheme.Palettes>
+    </FluentTheme>
+    <mi:MaterialIconStyles />
+    <StyleInclude Source="avares://SKSRJ/Styles/Md3.axaml" />
+  </Application.Styles>
+</Application>
