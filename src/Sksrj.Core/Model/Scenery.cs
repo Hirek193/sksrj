@@ -54,6 +54,8 @@ public partial class Scenery : ObservableObject
     /// <summary>Kilometry na jednostkę rysunku – używane przy automatycznym kilometrażu.</summary>
     [ObservableProperty] private double _kmPerUnit = 0.03;
     [ObservableProperty] private double _gridSize = 13;
+    /// <summary>Nazwa scenariusza MaSzyny (np. plik *.scn) – do generowania numeru systemowego; puste = nazwa schematu.</summary>
+    [ObservableProperty] private string _scenarioName = "";
 
     public ObservableCollection<SceneryLine> Lines { get; set; } = new();
     public ObservableCollection<SceneryNode> Nodes { get; set; } = new();

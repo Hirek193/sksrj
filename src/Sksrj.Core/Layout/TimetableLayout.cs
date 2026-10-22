@@ -672,17 +672,27 @@ public sealed class TimetableLayout
     }
 
     // ================================================================= rysowanie strony rozkładu
-    private string HeaderText()
+    private string HeaderText() =>
+        !string.IsNullOrWhiteSpace(_t.HeaderOverride) ? _t.HeaderOverride.Trim() : AutoHeader(_t);
+
+    /// <summary>Nagłówek stron szczegółowego rozkładu składany automatycznie: rodzaje pociągu, numer, (nr systemowy) Relacja od - do.</summary>
+    public static string AutoHeader(Timetable t)
     {
-        if (!string.IsNullOrWhiteSpace(_t.HeaderOverride)) return _t.HeaderOverride.Trim();
         var cats = new List<string>();
-        foreach (var r in _rows) if (r.Cat.Length > 0 && !cats.Contains(r.Cat)) cats.Add(r.Cat);
-        if (cats.Count == 0 && !string.IsNullOrWhiteSpace(_t.TrainCategory)) cats.Add(_t.TrainCategory.Trim());
+        var eff = (t.TrainCategory ?? "").Trim();
+        for (var i = 0; i < t.Points.Count; i++)
+        {
+            var p = t.Points[i];
+            if (!string.IsNullOrWhiteSpace(p.TrainCategory)) eff = p.TrainCategory.Trim();
+            if (TimetableTools.IsHiddenInCard(t, i)) continue;
+            if (eff.Length > 0 && !cats.Contains(eff)) cats.Add(eff);
+        }
+        if (cats.Count == 0 && !string.IsNullOrWhiteSpace(t.TrainCategory)) cats.Add(t.TrainCategory.Trim());
         var s = string.Join(" ", cats);
-        if (!string.IsNullOrWhiteSpace(_t.TrainNumber)) s += " " + _t.TrainNumber.Trim();
-        if (!string.IsNullOrWhiteSpace(_t.SystemNumber)) s += $" ({_t.SystemNumber.Trim()})";
-        var from = string.IsNullOrWhiteSpace(_t.RelationFrom) ? _rows[0].P.Name?.Trim() ?? "" : _t.RelationFrom.Trim();
-        var to = string.IsNullOrWhiteSpace(_t.RelationTo) ? _rows[^1].P.Name?.Trim() ?? "" : _t.RelationTo.Trim();
+        if (!string.IsNullOrWhiteSpace(t.TrainNumber)) s += " " + t.TrainNumber.Trim();
+        if (!string.IsNullOrWhiteSpace(t.SystemNumber)) s += $" ({t.SystemNumber.Trim()})";
+        var from = string.IsNullOrWhiteSpace(t.RelationFrom) ? t.Points.FirstOrDefault()?.Name?.Trim() ?? "" : t.RelationFrom.Trim();
+        var to = string.IsNullOrWhiteSpace(t.RelationTo) ? t.Points.LastOrDefault()?.Name?.Trim() ?? "" : t.RelationTo.Trim();
         s += $" Relacja {from} - {to}";
         return s.Trim();
     }

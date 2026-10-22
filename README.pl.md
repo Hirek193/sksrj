@@ -60,12 +60,14 @@ z trasami rzeczywistymi i **fikcyjnymi**.
 - Odcinki prowadzone pod kątem 0/45/90° (5 stylów) z dowolną liczbą załamań, kilometraż na końcach,
   zmiany prędkości V<sub>P</sub>/V<sub>L</sub>, blokada liniowa, elektryfikacja, omijanie bocznic przy
   wyznaczaniu tras.
+- **Zmiana numeru linii** – na schemacie i we wszystkich kartach, ostrzeżeniach i ograniczeniach posterunków, które się do niej odwołują.
 - **Inspektor**: metadane klikniętego posterunku (nazwa, rodzaj, pogrubienie / wersaliki, skróty,
   domyślny postój, czas postoju, godziny czynności, perony, notatki), odcinka lub linii.
 - **Ograniczenia prędkości posterunku** – dla wybranej linii, zakresu km i toru (np. geometria
   głowicy, rozjazdy): wpisywane do kolumn 3–4 karty albo jako pozycja wykazu ostrzeżeń stałych.
 - **Tryb ciemny schematu** – przełącznik na pasku narzędzi (eksport PDF pozostaje jasny).
 - **Auto-kilometraż** linii według długości rysunku, eksport schematu do PDF (A3) z legendą.
+- **Import rozkładów MaSzyny** (pliki tekstowe `*.txt` z katalogu rozkładów scenerii): posterunki, kilometraż, prędkości, skróty i jedno-/dwutorowość trafiają na schemat jako linia, a opcjonalnie powstaje karta pociągu z godzinami, czasami jazdy i składem z pliku.
 - **Schemat jako osobny plik** (`*.sksrjs`) – eksport schematu i import do innego projektu (import działa też z projektu `*.sksrj`).
 
 ### Trasa pociągu ze schematu
@@ -139,7 +141,7 @@ Analogicznie dla `-r linux-x64` lub `-r osx-arm64`.
 | Sekcja | Zawartość |
 |---|---|
 | **Schemat** | plan scenerii, narzędzia rysowania, inspektor, układanie trasy pociągu |
-| **Pociąg** | rodzaj i numer pociągu, relacja, nagłówek, strona tytułowa, sygnatura zarządzenia, stopka; **bank** nagłówków wydawców i przewoźników do ponownego użycia |
+| **Pociąg** | rodzaj i numer pociągu, numer systemowy generowany jak w skryptach MaSzyny (`hash(scenariusz[:5]) % 299 + 1`), relacja, nagłówek (z przyciskiem „Automatycznie”), strona tytułowa, przyciski „Dziś” przy datach, sygnatura zarządzenia, stopka; **bank** nagłówków wydawców i przewoźników do ponownego użycia |
 | **Trasa** | odcinki linii (kolumny 1–4): km, prędkości V<sub>P</sub>/V<sub>L</sub>, tor prawy/lewy |
 | **Posterunki** | posterunki (kolumny 5–9): nazwa, km, skróty, kursywy, godziny, czasy jazdy, numer pociągu, skład; zbiorcze ustawianie czasów postojów handlowych dla przystanków, stacji i stacji węzłowych (zaznacz / odznacz wszystkie) |
 | **Czasy jazdy** | profil trakcyjny, rezerwy, wykres v(s), wyniki A/B/C/D, wpisanie czasów do karty |

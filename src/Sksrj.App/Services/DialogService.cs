@@ -26,6 +26,9 @@ public interface IDialogService
     Task<bool> ConfirmAsync(string title, string message, string ok = "OK", string cancel = "Anuluj");
     Task ShowAboutAsync();
     Task<bool> ShowDwellBatchAsync(ViewModels.DwellBatchViewModel vm);
+    Task<string?> PromptAsync(string title, string message, string value, string ok = "OK");
+    Task<string?> OpenMaSzynaTimetableAsync();
+    Task<bool> ShowMaSzynaImportAsync(ViewModels.MaSzynaImportViewModel vm);
 }
 
 public sealed class DialogService : IDialogService
@@ -98,6 +101,23 @@ public sealed class DialogService : IDialogService
         });
         return res?.TryGetLocalPath();
     }
+
+    public async Task<string?> OpenMaSzynaTimetableAsync()
+    {
+        var res = await _owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Importuj rozkład jazdy MaSzyny",
+            AllowMultiple = false,
+            FileTypeFilter = new[] { new FilePickerFileType("Rozkład MaSzyny (tekst)") { Patterns = new[] { "*.txt" } }, FilePickerFileTypes.All },
+        });
+        return res.Count > 0 ? res[0].TryGetLocalPath() : null;
+    }
+
+    public Task<bool> ShowMaSzynaImportAsync(ViewModels.MaSzynaImportViewModel vm) =>
+        new Views.MaSzynaImportWindow { DataContext = vm }.ShowDialog<bool>(_owner);
+
+    public Task<string?> PromptAsync(string title, string message, string value, string ok = "OK") =>
+        Views.PromptDialog.ShowAsync(_owner, title, message, value, ok);
 
     public Task<bool> ShowDwellBatchAsync(ViewModels.DwellBatchViewModel vm) =>
         new Views.DwellBatchWindow { DataContext = vm }.ShowDialog<bool>(_owner);
