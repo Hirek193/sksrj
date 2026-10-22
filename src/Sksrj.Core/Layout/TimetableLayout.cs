@@ -127,6 +127,8 @@ public sealed class TimetableLayout
         public List<(string text, FontSpec font)> TopLines = new();
         public List<(string left, string right, FontSpec lf)> BottomLines = new();
         public int Lines;
+        /// <summary>Odległość od góry wiersza do „położenia” posterunku – tuż pod wierszem z nazwą.</summary>
+        public double Anchor = FirstBase + MarkerBelowName;
         public string? Box;
         public string Cat = "";
         public string[] Stock = new string[8];
@@ -436,6 +438,7 @@ public sealed class TimetableLayout
             if (!string.IsNullOrWhiteSpace(p.StopKinds)) name += " ; " + p.StopKinds.Trim();
             if (!string.IsNullOrWhiteSpace(p.NoteTop)) r.TopLines.Add((p.NoteTop.Trim(), FItal));
             r.TopLines.Add((name, p.Bold ? FNameB : FName));
+            r.Anchor = FirstBase + MarkerBelowName + (r.TopLines.Count - 1) * LH;
 
             var abbr = Lines(p.Abbreviations).Select(l => l.Trim()).ToList();
             if (abbr.Count == 0) abbr.Add("");
@@ -509,22 +512,23 @@ public sealed class TimetableLayout
     // ================================================================= rozmieszczenie pionowe
     private void SolveVertical()
     {
-        // Wiersze posterunków układane są kolejno. Zmiany prędkości/linii leżące na szlaku i → posterunek i
-        // trafiają do wiersza i proporcjonalnie do kilometrażu; jeśli się nie mieszczą, wiersz jest wydłużany
-        // (tak jak w kartach SKRJ, gdzie np. „Wwa Praga WPT J” obejmuje wiele zmian prędkości).
+        // Posterunek leży na wysokości swojej nazwy (pierwszy wiersz tekstu – tak jak oznaczenie jednotoru między
+        // kolumną 5 i 6). Zmiany prędkości/linii na szlaku i → i+1 rozmieszczane są proporcjonalnie do kilometrażu
+        // między nazwą posterunku i a nazwą posterunku i+1 (czyli w dolnej części wiersza i i na górze wiersza i+1);
+        // jeśli się nie mieszczą, wiersz i jest wydłużany (jak w kartach SKRJ, np. „Wwa Praga WPT J”).
         var n = _rows.Count;
         var m = _evs.Count;
         var sFirst = _rows[0].S; var sLast = _rows[^1].S;
         foreach (var e in _evs) e.SClamped = Math.Clamp(e.S, sFirst, sLast);
 
-        // przypisanie zdarzeń do wierszy
+        // przypisanie zdarzeń do szlaków (wiersz posterunku początkowego szlaku)
         var byRow = new List<int>[n];
         for (var i = 0; i < n; i++) byRow[i] = new List<int>();
         for (var j = 1; j < m; j++)
         {
             var sv = _evs[j].SClamped; var i = 0;
             while (i < n - 1 && sv > _rows[i].S + 1e-9) i++;
-            byRow[i].Add(j);
+            byRow[Math.Max(0, i - 1)].Add(j);
         }
         if (m > 0) _evs[0].Y = 0;
         var prevEv = 0.0; var hasPrev = m > 0;
@@ -532,12 +536,13 @@ public sealed class TimetableLayout
         for (var i = 0; i < n; i++)
         {
             var evs = byRow[i];
-            double sA = i == 0 ? (m > 0 ? Math.Min(_evs[0].S, _rows[0].S) : _rows[0].S) : _rows[i - 1].S, sB = _rows[i].S;
+            double sA = _rows[i].S, sB = i + 1 < n ? _rows[i + 1].S : _rows[i].S;
+            var start = yTop + _rows[i].Anchor;
+            var dA = (i + 1 < n ? _rows[i + 1].Anchor : _rows[i].Anchor) - _rows[i].Anchor; // przesunięcie położenia następnego posterunku
             double Frac(int j)
             {
-                if (sB - sA < 1e-9) return 1;
-                var sv = i == 0 ? Math.Min(_evs[j].S, sB) : _evs[j].SClamped;
-                return Math.Clamp((sv - sA) / (sB - sA), 0, 1);
+                if (sB - sA < 1e-9) return _evs[j].SClamped > sA + 1e-9 || n == 1 ? 1 : 0;
+                return Math.Clamp((_evs[j].SClamped - sA) / (sB - sA), 0, 1);
             }
             double[] Place(double H)
             {
@@ -546,7 +551,7 @@ public sealed class TimetableLayout
                 for (var k = 0; k < evs.Count; k++)
                 {
                     var j = evs[k];
-                    var y = yTop + Frac(j) * H;
+                    var y = start + Frac(j) * H;
                     if (hasPrev || k > 0) y = Math.Max(y, last + _evs[j].Gap);
                     res[k] = y; last = y;
                 }
@@ -556,16 +561,17 @@ public sealed class TimetableLayout
             if (evs.Count > 0)
             {
                 // wysokość nominalna: tyle, by zmieściły się wszystkie zmiany z tego szlaku
-                var H = Math.Max(h, evs.Sum(j => _evs[j].Gap));
+                var H = Math.Max(h + dA, evs.Sum(j => _evs[j].Gap));
                 var pos = Place(H);
                 for (var k = 0; k < evs.Count; k++) _evs[evs[k]].Y = pos[k];
-                h = Math.Max(H, pos[^1] - yTop);
-                // zmiana leżąca dokładnie przy posterunku – wyrównaj do dolnej krawędzi wiersza
+                h = Math.Max(H, pos[^1] - start) - dA;
+                h = Math.Max(h, _rows[i].H);
+                // zmiana leżąca dokładnie przy następnym posterunku – na wysokości jego nazwy
                 for (var k = evs.Count - 1; k >= 0; k--)
                 {
                     var j = evs[k];
                     if (Frac(j) < 0.999) break;
-                    var target = yTop + h;
+                    var target = start + h + dA;
                     var nextY = k + 1 < evs.Count ? _evs[evs[k + 1]].Y - _evs[evs[k + 1]].Gap : double.MaxValue;
                     _evs[j].Y = Math.Min(Math.Max(_evs[j].Y, target), nextY);
                 }
@@ -893,7 +899,7 @@ public sealed class TimetableLayout
         // obszar szlaku i → i+1: od pierwszego wiersza tekstu (nazwy) posterunku i do pierwszego wiersza
         // posterunku i+1 – tak jak w kartach SKRJ gruba linia jednotoru kończy się / zaczyna pod nazwą posterunku
         var n = _rows.Count;
-        double Anchor(int i) => Math.Min(_rows[i].Top + FirstBase + MarkerBelowName, _rows[i].Bottom);
+        double Anchor(int i) => Math.Min(_rows[i].Top + _rows[i].Anchor, _rows[i].Bottom);
         double Y0 = _rows[r0].Top, Y1 = _rows[r1].Bottom;
         var last = Math.Max(0, n - 2);
         for (var i = 0; i <= last; i++)
