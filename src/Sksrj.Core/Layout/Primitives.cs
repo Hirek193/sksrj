@@ -1,3 +1,16 @@
+// SKSRJ Timetable generator
+// Copyright (C) 2026 Oskar Jagodziński
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of
+// the GNU General Public License as published by the Free Software Foundation, either version 3
+// of the License, or (at your option) any later version, together with the additional terms
+// under Section 7 of that License (see the files LICENSE and ADDITIONAL_TERMS).
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+// without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+// Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+// Original source: https://github.com/Hirek193/sksrj
+
 namespace Sksrj.Core.Layout;
 
 public readonly record struct Rgb(byte R, byte G, byte B)
@@ -6,9 +19,20 @@ public readonly record struct Rgb(byte R, byte G, byte B)
     /// <summary>Kolor powtórzonych (niezmienionych) parametrów składu.</summary>
     public static readonly Rgb Grey = new(168, 168, 168);
     public static readonly Rgb LightGrey = new(200, 200, 200);
+    public static readonly Rgb White = new(255, 255, 255);
+
+    public static Rgb Parse(string? hex, Rgb fallback)
+    {
+        var h = (hex ?? "").Trim().TrimStart('#');
+        if (h.Length == 8) h = h[2..];
+        if (h.Length != 6 || !int.TryParse(h, System.Globalization.NumberStyles.HexNumber, null, out var v)) return fallback;
+        return new Rgb((byte)(v >> 16), (byte)(v >> 8), (byte)v);
+    }
+
+    public string Hex => $"#{R:X2}{G:X2}{B:X2}";
 }
 
-public readonly record struct FontSpec(double Size, bool Bold = false, bool Italic = false);
+public readonly record struct FontSpec(double Size, bool Bold = false, bool Italic = false, bool Sans = false);
 
 public enum Align { Left, Center, Right }
 
@@ -16,6 +40,9 @@ public abstract record DrawOp;
 public sealed record LineOp(double X1, double Y1, double X2, double Y2, double Width, Rgb Color) : DrawOp;
 public sealed record FillRectOp(double X, double Y, double W, double H, Rgb Color) : DrawOp;
 public sealed record PolygonOp(IReadOnlyList<(double X, double Y)> Points, Rgb Color) : DrawOp;
+public sealed record EllipseOp(double Cx, double Cy, double Rx, double Ry, Rgb? Fill, Rgb? Stroke, double StrokeWidth) : DrawOp;
+/// <summary>Linia łamana (opcjonalnie przerywana – długości kresek/przerw w jednostkach rysunku).</summary>
+public sealed record PolylineOp(IReadOnlyList<(double X, double Y)> Points, double Width, Rgb Color, double[]? Dash = null, bool RoundJoin = true) : DrawOp;
 /// <summary>Tekst; Y to linia bazowa.</summary>
 public sealed record TextOp(double X, double Y, string Text, FontSpec Font, Rgb Color) : DrawOp;
 
@@ -62,6 +89,10 @@ public sealed class Canvas
     }
 
     public void Polygon(Rgb c, params (double, double)[] pts) => _page.Ops.Add(new PolygonOp(pts, c));
+
+    public void Ellipse(double cx, double cy, double rx, double ry, Rgb? fill, Rgb? stroke, double sw = 1) => _page.Ops.Add(new EllipseOp(cx, cy, rx, ry, fill, stroke, sw));
+
+    public void Polyline(IReadOnlyList<(double X, double Y)> pts, double w, Rgb c, double[]? dash = null) { if (pts.Count >= 2) _page.Ops.Add(new PolylineOp(pts, w, c, dash)); }
 
     /// <summary>Rysuje tekst; x to lewa krawędź / środek / prawa krawędź zależnie od wyrównania. Zwraca szerokość.</summary>
     public double Text(double x, double baseline, string text, FontSpec f, Align a = Align.Left, Rgb? c = null, bool underline = false)

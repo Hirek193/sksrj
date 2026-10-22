@@ -6,6 +6,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <RootNamespace>Sksrj.Core</RootNamespace>
+    <Product>SKSRJ Timetable generator</Product>
+    <Authors>Oskar Jagodziński</Authors>
+    <Copyright>Copyright © 2026 Oskar Jagodziński. GNU GPL v3 lub nowsza z warunkami dodatkowymi (ADDITIONAL_TERMS).</Copyright>
+    <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>

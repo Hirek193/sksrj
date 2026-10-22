@@ -1,0 +1,142 @@
+<!--
+  SKSRJ Timetable generator
+  Copyright (C) 2026 Oskar Jagodziński
+
+  This program is free software: you can redistribute it and/or modify it under the terms of
+  the GNU General Public License as published by the Free Software Foundation, either version 3
+  of the License, or (at your option) any later version, together with the additional terms
+  under Section 7 of that License (see the files LICENSE and ADDITIONAL_TERMS).
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+  Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+  Original source: https://github.com/Hirek193/sksrj
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sksrj.App.ViewModels"
+             xmlns:m="using:Sksrj.Core.Model"
+             xmlns:mi="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Sksrj.App.Views.RestrictionsView"
+             x:DataType="vm:MainViewModel">
+  <ScrollViewer>
+    <StackPanel Margin="28,24,28,40" Spacing="16" MaxWidth="1100">
+      <StackPanel Spacing="4">
+        <TextBlock Classes="headline" Text="Ostrzeżenia – ograniczenia prędkości" />
+        <TextBlock Classes="body-small" TextWrapping="Wrap"
+                   Text="Wykaz ostrzeżeń stałych (Dodatek 2 do WRJ) i doraźnych, wspólny dla wszystkich pociągów projektu. Stałe są wliczane do technicznego czasu jazdy A, doraźne – do rezerwy C. Ostrzeżenia na trasie pociągu drukowane są na stronie „Wykaz ostrzeżeń” karty." />
+      </StackPanel>
+
+      <!-- na trasie bieżącego pociągu -->
+      <Border Classes="card" IsVisible="{Binding RouteRestrictionRows.Count, Converter={StaticResource HasItems}}">
+        <StackPanel Spacing="6">
+          <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,0,0,6">
+            <mi:MaterialIcon Kind="MapMarkerAlertOutline" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+            <TextBlock Classes="title-medium" Text="{Binding SelectedTimetable.DisplayName, StringFormat='Na trasie pociągu {0}'}" VerticalAlignment="Center" />
+          </StackPanel>
+          <ItemsControl ItemsSource="{Binding RouteRestrictionRows}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:RestrictionRow">
+                <Border BorderBrush="{DynamicResource Md.OutlineVariant}" BorderThickness="0,0,0,1" Padding="6,5">
+                  <Grid ColumnDefinitions="60,170,60,80,*,100">
+                    <TextBlock Text="{Binding Line}" FontWeight="SemiBold" />
+                    <TextBlock Grid.Column="1" Text="{Binding Km}" />
+                    <TextBlock Grid.Column="2" Text="{Binding Speed}" FontWeight="SemiBold" />
+                    <TextBlock Grid.Column="3" Text="{Binding Kind}" Classes="muted" />
+                    <TextBlock Grid.Column="4" Text="{Binding Reason}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="5" Text="{Binding Loss}" TextAlignment="Right" Foreground="{DynamicResource Md.Error}" />
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <!-- wykaz -->
+      <Border Classes="card">
+        <StackPanel Spacing="12">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <mi:MaterialIcon Kind="ClipboardListOutline" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+              <TextBlock Classes="title-medium" Text="Wykaz ostrzeżeń" VerticalAlignment="Center" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+              <Button Classes="small" Command="{Binding SortRestrictionsCommand}"><StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="SortAscending" /><TextBlock Text="Sortuj" /></StackPanel></Button>
+              <Button Classes="tonal small" Command="{Binding AddRestrictionCommand}" CommandParameter="Permanent"><StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="Plus" /><TextBlock Text="Stałe" /></StackPanel></Button>
+              <Button Classes="tonal small" Command="{Binding AddRestrictionCommand}" CommandParameter="Temporary"><StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="Plus" /><TextBlock Text="Doraźne" /></StackPanel></Button>
+            </StackPanel>
+          </Grid>
+          <TextBlock Classes="body-small" TextWrapping="Wrap" Text="Tor nr 1 = tor prawy dla jazdy w kierunku rosnącego kilometrażu, tor nr 2 = w kierunku malejącego. Na szlakach jednotorowych tor nie ma znaczenia." />
+          <ItemsControl ItemsSource="{Binding Project.Restrictions}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="8" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="m:SpeedRestriction">
+                <Border Background="{DynamicResource Md.Surface}" CornerRadius="12" Padding="10,8">
+                  <StackPanel Spacing="6">
+                    <Grid ColumnDefinitions="Auto,8,110,8,70,8,100,8,*,8,*,8,64,8,110,Auto">
+                      <CheckBox IsChecked="{Binding Active}" ToolTip.Tip="Obowiązuje" />
+                      <ComboBox Grid.Column="2" Classes="cell" SelectedIndex="{Binding Kind, Converter={StaticResource EnumIndex}}">
+                        <ComboBoxItem Content="stałe" /><ComboBoxItem Content="doraźne" />
+                      </ComboBox>
+                      <TextBox Grid.Column="4" Classes="cell" Text="{Binding Line}" Watermark="linia" FontWeight="SemiBold" />
+                      <ComboBox Grid.Column="6" Classes="cell" SelectedIndex="{Binding Track, Converter={StaticResource EnumIndex}}">
+                        <ComboBoxItem Content="oba tory" /><ComboBoxItem Content="tor 1" /><ComboBoxItem Content="tor 2" />
+                      </ComboBox>
+                      <TextBox Grid.Column="8" Classes="cell" Text="{Binding KmFrom}" Watermark="od km" />
+                      <TextBox Grid.Column="10" Classes="cell" Text="{Binding KmTo}" Watermark="do km" />
+                      <TextBox Grid.Column="12" Classes="cell" Text="{Binding Speed}" Watermark="V" FontWeight="SemiBold" />
+                      <ComboBox Grid.Column="14" Classes="cell" SelectedIndex="{Binding AppliesTo, Converter={StaticResource EnumIndex}}">
+                        <ComboBoxItem Content="wszystkie" /><ComboBoxItem Content="pasażerskie" /><ComboBoxItem Content="towarowe" />
+                      </ComboBox>
+                      <Button Grid.Column="15" Classes="icon small danger" Margin="6,0,0,0" Command="{ReflectionBinding $parent[UserControl].DataContext.RemoveRestrictionCommand}" CommandParameter="{Binding}"><mi:MaterialIcon Kind="DeleteOutline" /></Button>
+                    </Grid>
+                    <Grid ColumnDefinitions="*,8,120,8,120,Auto">
+                      <TextBox Classes="cell" Text="{Binding Reason}" Watermark="przyczyna (np. zły stan nawierzchni)" />
+                      <TextBox Grid.Column="2" Classes="cell" Text="{Binding ValidFrom}" Watermark="ważne od" />
+                      <TextBox Grid.Column="4" Classes="cell" Text="{Binding ValidTo}" Watermark="ważne do" />
+                      <Border Grid.Column="5" Classes="chiplabel" Margin="8,0,0,0" VerticalAlignment="Center" IsVisible="{Binding Generated}"><TextBlock Text="wygenerowane" /></Border>
+                    </Grid>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <!-- generator -->
+      <Border Classes="card">
+        <StackPanel Spacing="12">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <mi:MaterialIcon Kind="DiceMultipleOutline" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
+            <TextBlock Classes="title-medium" Text="Generator ostrzeżeń doraźnych" VerticalAlignment="Center" />
+          </StackPanel>
+          <TextBlock Classes="body-small" TextWrapping="Wrap" Text="Losuje ostrzeżenia doraźne na znanych liniach – świetne do urozmaicenia jazd w symulatorze (każda jazda inna). Po wygenerowaniu czasy jazdy i wykaz ostrzeżeń w karcie aktualizują się same." />
+          <TextBlock Classes="body-small" TextWrapping="Wrap" Text="{Binding KnownLinesText, StringFormat='Znane linie: {0}'}" />
+          <Grid ColumnDefinitions="90,10,*,10,*,10,90,10,90">
+            <HeaderedContentControl Classes="field" Header="Liczba"><TextBox Text="{Binding GenCount}" /></HeaderedContentControl>
+            <HeaderedContentControl Grid.Column="2" Classes="field" Header="Linie (puste = wszystkie)"><TextBox Text="{Binding GenLines}" Watermark="np. 201, 204" /></HeaderedContentControl>
+            <HeaderedContentControl Grid.Column="4" Classes="field" Header="Prędkości [km/h]"><TextBox Text="{Binding GenSpeeds}" /></HeaderedContentControl>
+            <HeaderedContentControl Grid.Column="6" Classes="field" Header="Dł. min [m]"><TextBox Text="{Binding GenMinLength}" /></HeaderedContentControl>
+            <HeaderedContentControl Grid.Column="8" Classes="field" Header="Dł. max [m]"><TextBox Text="{Binding GenMaxLength}" /></HeaderedContentControl>
+          </Grid>
+          <Grid ColumnDefinitions="*,10,*,10,*">
+            <HeaderedContentControl Classes="field" Header="Ważne od"><TextBox Text="{Binding GenValidFrom}" Watermark="dd.mm.rrrr" /></HeaderedContentControl>
+            <HeaderedContentControl Grid.Column="2" Classes="field" Header="Ważne do"><TextBox Text="{Binding GenValidTo}" Watermark="dd.mm.rrrr" /></HeaderedContentControl>
+            <HeaderedContentControl Grid.Column="4" Classes="field" Header="Ziarno losowania (opcjonalnie)"><TextBox Text="{Binding GenSeed}" Watermark="to samo ziarno = te same ostrzeżenia" /></HeaderedContentControl>
+          </Grid>
+          <CheckBox IsChecked="{Binding GenOnlyCurrentRoute}" Content="Tylko na trasie bieżącego pociągu" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Classes="filled" Command="{Binding GenerateRestrictionsCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="DiceMultipleOutline" /><TextBlock Text="Generuj" /></StackPanel>
+            </Button>
+            <Button Classes="outlined" Command="{Binding RemoveGeneratedRestrictionsCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="DeleteSweepOutline" /><TextBlock Text="Usuń wygenerowane" /></StackPanel>
+            </Button>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

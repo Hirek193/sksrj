@@ -1,3 +1,16 @@
+// SKSRJ Timetable generator
+// Copyright (C) 2026 Oskar Jagodziński
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of
+// the GNU General Public License as published by the Free Software Foundation, either version 3
+// of the License, or (at your option) any later version, together with the additional terms
+// under Section 7 of that License (see the files LICENSE and ADDITIONAL_TERMS).
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+// without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+// Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+// Original source: https://github.com/Hirek193/sksrj
+
 namespace Sksrj.Core.Model;
 
 /// <summary>Projekty przykładowe.</summary>
@@ -6,9 +19,65 @@ public static class Samples
     public static TimetableProject Project()
     {
         var p = new TimetableProject { ProjectName = "Przykłady" };
+        p.Scenery = SampleScenery.Build();
+        AddSampleRestrictions(p);
+        p.Timetables.Add(FromScenery(p, "ROJ", "63215", "700215", "EZT (np. EN57)", StopPolicy.AllPassenger, "06:12",
+            "Koleje Fikcyjne Spółka z o.o.", "- (A) 14.XII-30.VI ;", "Kaletnik", "Rypinek", "Korty", "Leosin"));
+        p.Timetables.Add(FromScenery(p, "TME", "44210", "744210", "Pociąg towarowy ciężki (np. ET22 + 2000 t)", StopPolicy.None, "10:05",
+            "Cargo Fikcyjne S.A.", "- (1)-(7) 14.XII-12.XII ;", "kon3", "Sosiny", "kon2"));
         p.Timetables.Add(Fictional());
         p.Timetables.Add(Ir11Example());
         return p;
+    }
+
+    private static void AddSampleRestrictions(TimetableProject p)
+    {
+        p.Restrictions.Add(new SpeedRestriction { Kind = RestrictionKind.Permanent, Line = "201", KmFrom = "18.200", KmTo = "19.100", Speed = "80", Reason = "obiekt inżynieryjny – most na rzece Wkrze" });
+        p.Restrictions.Add(new SpeedRestriction { Kind = RestrictionKind.Permanent, Line = "201", KmFrom = "80.500", KmTo = "81.300", Speed = "70", Reason = "łuk o małym promieniu" });
+        p.Restrictions.Add(new SpeedRestriction { Kind = RestrictionKind.Temporary, Line = "201", KmFrom = "34.300", KmTo = "34.800", Speed = "40", Track = RestrictionTrack.Track1, Reason = "zły stan nawierzchni", ValidFrom = "01.10.2026", ValidTo = "31.12.2026" });
+        p.Restrictions.Add(new SpeedRestriction { Kind = RestrictionKind.Temporary, Line = "204", KmFrom = "8.000", KmTo = "8.600", Speed = "30", Reason = "usterka rozjazdu", ValidFrom = "15.10.2026" });
+    }
+
+    /// <summary>Karta pociągu z trasą ułożoną na schemacie (punkty trasy – nazwy posterunków lub klucze).</summary>
+    public static Timetable FromScenery(TimetableProject p, string cat, string num, string sys, string preset, StopPolicy policy, string dep, string carrier, string days, params string[] waypoints)
+    {
+        var sc = p.Scenery;
+        var t = new Timetable
+        {
+            TrainCategory = cat, TrainNumber = num, SystemNumber = sys, Carrier = carrier, RunningDays = days,
+            ApplicationNumber = $"KF-2027/{num[^3..]}", ApplicationDate = "14.04.2026", OrderNumber = $"RRJ_2027_{sys}_15", OrderDate = "02.10.2026",
+        };
+        var pr = TractionPresets.Find(preset);
+        if (pr != null)
+        {
+            t.RunCalc.Preset = pr.Name;
+            t.RunCalc.StartAcceleration = pr.A0.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            t.RunCalc.PowerPerTon = pr.PowerPerTon.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            t.RunCalc.Braking = pr.Braking.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            t.RunCalc.ResistanceA = pr.ResA.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            t.RunCalc.ResistanceC = pr.ResC.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+        t.Route.StopPolicy = policy;
+        // klucze kon1..kon3 oznaczają kolejne „Koniec scenerii”
+        var ends = sc.Nodes.Where(n => n.Name == "Koniec scenerii").ToList();
+        foreach (var w in waypoints)
+        {
+            SceneryNode? n = w.StartsWith("kon") && int.TryParse(w[3..], out var k) && k <= ends.Count ? ends[k - 1]
+                : sc.Nodes.FirstOrDefault(x => string.Equals(x.Name, w, StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(x.TypeSuffix))
+                  ?? sc.Nodes.FirstOrDefault(x => string.Equals(x.Name, w, StringComparison.OrdinalIgnoreCase));
+            if (n != null) t.Route.Waypoints.Add(n.Id);
+        }
+        var route = Engine.SceneryRouter.FindRoute(sc, t.Route.Waypoints.ToList());
+        Engine.SceneryRouter.ApplyToTimetable(sc, t, route);
+        if (t.Points.Count > 0)
+        {
+            t.Points[0].Departure = dep;
+            if (cat.StartsWith("T")) { t.Points[0].Loco1 = "ET22"; t.Points[0].LocoLoad = "2000"; t.Points[0].TrainLength = "560"; t.Points[0].Vmax = "70"; t.Points[0].BrakePercent = "48"; t.Points[0].BrakeType = "G"; }
+            else { t.Points[0].LocoLoad = "126"; t.Points[0].BrakePercent = "64"; }
+        }
+        var res = Engine.RunTimeCalculator.Calculate(t, Engine.RestrictionTools.Effective(p));
+        Engine.RunTimeCalculator.Apply(t, res);
+        return t;
     }
 
     public static Timetable NewEmpty()
@@ -41,7 +110,6 @@ public static class Samples
             SystemNumber = "700215",
             RelationFrom = "Kolejowo Główne",
             RelationTo = "Rudnik Wielki",
-            Issuer = "SYMULACYJNE LINIE KOLEJOWE S.A.\nCENTRUM ZARZĄDZANIA RUCHEM KOLEJOWYM\nW KOLEJOWIE",
             TimetableKind = "ROCZNY ROZKŁAD JAZDY",
             Carrier = "Koleje Fikcyjne Spółka z o.o.",
             ApplicationNumber = "KF-2027/015",

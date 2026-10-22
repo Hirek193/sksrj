@@ -1,3 +1,16 @@
+// SKSRJ Timetable generator
+// Copyright (C) 2026 Oskar Jagodziński
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of
+// the GNU General Public License as published by the Free Software Foundation, either version 3
+// of the License, or (at your option) any later version, together with the additional terms
+// under Section 7 of that License (see the files LICENSE and ADDITIONAL_TERMS).
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+// without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+// Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+// Original source: https://github.com/Hirek193/sksrj
+
 using System.Collections;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -40,6 +53,8 @@ public sealed class DeepChangeTracker : IDisposable
     private readonly HashSet<object> _tracked = new(ReferenceEqualityComparer.Instance);
     private readonly object _root;
     public event EventHandler? Changed;
+    /// <summary>Zmiana właściwości konkretnego obiektu (nadawca, nazwa właściwości) lub kolekcji (kolekcja, null).</summary>
+    public event Action<object, string?>? ItemChanged;
 
     public DeepChangeTracker(object root)
     {
@@ -90,6 +105,7 @@ public sealed class DeepChangeTracker : IDisposable
             if (prop != null && !prop.PropertyType.IsValueType && prop.PropertyType != typeof(string))
                 Attach(prop.GetValue(sender));
         }
+        if (sender != null) ItemChanged?.Invoke(sender, e.PropertyName);
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
@@ -99,6 +115,7 @@ public sealed class DeepChangeTracker : IDisposable
         if (e.NewItems != null) foreach (var o in e.NewItems) Attach(o);
         if (e.Action == NotifyCollectionChangedAction.Reset && sender is IEnumerable en)
             foreach (var o in en) Attach(o);
+        if (sender != null) ItemChanged?.Invoke(sender, null);
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
