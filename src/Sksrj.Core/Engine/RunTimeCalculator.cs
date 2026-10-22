@@ -17,7 +17,11 @@ using Sksrj.Core.Util;
 
 namespace Sksrj.Core.Engine;
 
-public sealed record SegmentResult(int Index, string From, string To, double Km, double A, double B, double C, double Normal, double Short, double AvgSpeed, bool StopAtEnd, double Dwell);
+public sealed record SegmentResult(int Index, string From, string To, double Km, double A, double B, double C, double Normal, double Short, double AvgSpeed, bool StopAtEnd, double Dwell)
+{
+    /// <summary>Indeks posterunku początkowego (poprzedni drukowany posterunek).</summary>
+    public int FromIndex { get; init; } = Index - 1;
+}
 
 public sealed record MatchedRestriction(SpeedRestriction R, double S0, double S1, string Line, double Speed, double LossMin);
 
@@ -28,6 +32,8 @@ public sealed class RunTimeResult
     public List<SegmentResult> Segments { get; } = new();
     public List<MatchedRestriction> Restrictions { get; } = new();
     public List<ProfileMark> Marks { get; } = new();
+    /// <summary>Czas techniczny [min] od początku trasy do każdego posterunku – do godzin przejazdu przez pomijane przystanki.</summary>
+    public double[] PointTime { get; set; } = Array.Empty<double>();
     public List<string> Warnings { get; } = new();
     /// <summary>Próbki profilu: s [km], prędkość jazdy [km/h], prędkość dopuszczalna bez i z ostrzeżeniami doraźnymi [km/h].</summary>
     public double[] S { get; set; } = Array.Empty<double>();
@@ -244,12 +250,16 @@ public static class RunTimeCalculator
         }
         r.Restrictions.AddRange(matched);
 
-        // wyniki na odcinkach między posterunkami
+        // wyniki na odcinkach między drukowanymi posterunkami (przystanki pomijane w karcie są wliczane do szlaku)
+        r.PointTime = t.Points.Select((_, k) => tAll[idx[k]] / 60.0).ToArray();
+        var kp = 0;
         for (var k = 1; k < t.Points.Count; k++)
         {
-            var km = Math.Max(0, g.PointS[k] - g.PointS[k - 1]);
-            var a = Math.Max(0, (tBase[idx[k]] - tBase[idx[k - 1]]) / 60.0);
-            var aAll = Math.Max(0, (tAll[idx[k]] - tAll[idx[k - 1]]) / 60.0);
+            if (Model.TimetableTools.IsHiddenInCard(t, k)) continue;
+            var k0 = kp; kp = k;
+            var km = Math.Max(0, g.PointS[k] - g.PointS[k0]);
+            var a = Math.Max(0, (tBase[idx[k]] - tBase[idx[k0]]) / 60.0);
+            var aAll = Math.Max(0, (tAll[idx[k]] - tAll[idx[k0]]) / 60.0);
             var c = set.IncludeTemporary ? Math.Max(0, aAll - a) : 0;
             var b = r.ReserveRate * km / 100.0;
             var normal = Ceil1(a + b + c);
@@ -258,7 +268,7 @@ public static class RunTimeCalculator
             double dwell = 0;
             if (stop[k] && k < t.Points.Count - 1)
                 dwell = Duration.TryParse(t.Points[k].Dwell, out var dw) && dw.Tenths > 0 ? dw.Tenths / 10.0 : r.MinDwell;
-            r.Segments.Add(new SegmentResult(k, Name(t.Points[k - 1]), Name(t.Points[k]), km, a, b, c, normal, shrt, avg, stop[k], dwell));
+            r.Segments.Add(new SegmentResult(k, Name(t.Points[k0]), Name(t.Points[k]), km, a, b, c, normal, shrt, avg, stop[k], dwell) { FromIndex = k0 });
         }
         for (var k = 0; k < t.Points.Count; k++) r.Marks.Add(new ProfileMark(g.PointS[k], Name(t.Points[k]), stop[k]));
 
@@ -290,6 +300,7 @@ public static class RunTimeCalculator
         foreach (var seg in r.Segments)
         {
             var p = t.Points[seg.Index];
+            for (var h = seg.FromIndex + 1; h < seg.Index; h++) { t.Points[h].TravelNormal = ""; t.Points[h].TravelShort = ""; }
             if (seg.Km < 0.0005) { p.TravelNormal = ""; p.TravelShort = ""; continue; }
             p.TravelNormal = F1(seg.Normal);
             p.TravelShort = F1(seg.Short);
@@ -305,6 +316,17 @@ public static class RunTimeCalculator
             var p = pts[seg.Index];
             var last = seg.Index == pts.Count - 1;
             var arr = cur + new Duration((int)Math.Round(seg.Normal * 10));
+            // godziny przejazdu przez przystanki pomijane w karcie – proporcjonalnie do czasu technicznego
+            if (seg.Index - seg.FromIndex > 1 && r.PointTime.Length == pts.Count)
+            {
+                var t0 = r.PointTime[seg.FromIndex]; var span = r.PointTime[seg.Index] - t0;
+                for (var h = seg.FromIndex + 1; h < seg.Index; h++)
+                {
+                    var f = span > 1e-9 ? Math.Clamp((r.PointTime[h] - t0) / span, 0, 1) : 0;
+                    pts[h].Arrival = "";
+                    pts[h].Departure = (cur + new Duration((int)Math.Round(seg.Normal * f * 10))).ToString();
+                }
+            }
             if (last)
             {
                 if (set.RoundIr11) arr = CeilTo(arr, 10);

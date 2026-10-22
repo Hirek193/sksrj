@@ -1,114 +1,120 @@
 # SKSRJ Timetable generator
 
-**Generator symulacyjnych kart rozkładu jazdy** – aplikacja desktopowa (C#, .NET 8, Avalonia 11,
-interfejs w stylu Material Design 3) do tworzenia **służbowych rozkładów jazdy pociągów (kart rozkładu
-jazdy) w formacie PDF** dla symulatorów kolejowych, np. [MaSzyna](https://eu07.pl).
+**English** · [Polski](README.pl.md)
 
-Wygląd kart odwzorowuje wzór z *Instrukcji o rozkładzie jazdy pociągów Ir-11* (PKP PLK S.A., 2021 –
-§ 32, Załączniki 4 i 5). Trasy pociągów układa się na **planie schematycznym scenerii**, a czasy jazdy
-liczone są według **§ 21 Ir-11** z uwzględnieniem **ostrzeżeń stałych i doraźnych**. Program działa
-z trasami rzeczywistymi i **fikcyjnymi**.
+**Simulation timetable card generator** – a desktop application (C#, .NET 8, Avalonia 11,
+Material Design 3 style UI) for creating **Polish railway service timetables (*karty rozkładu jazdy*)
+as PDF files** for train simulators such as [MaSzyna](https://eu07.pl).
 
-![Schemat scenerii z ułożoną trasą pociągu](docs/img/schemat.png)
+The cards reproduce the template from the *Instrukcja o rozkładzie jazdy pociągów Ir-11*
+(PKP PLK S.A., 2021 – § 32, Appendices 4 and 5). Train routes are laid out on a **schematic scenery map**,
+and running times are calculated according to **Ir-11 § 21**, taking **permanent and temporary speed
+restrictions** into account. The program works with both real and **fictional** routes.
 
-> **Uwaga:** program służy wyłącznie do celów symulacyjnych. Nie jest powiązany z PKP Polskie Linie
-> Kolejowe S.A. ani przez nią autoryzowany i nie może być używany do prowadzenia rzeczywistego ruchu
-> kolejowego.
+The user interface and the generated cards are in Polish, as in the original instruction.
+
+![Scenery schematic with a train route](docs/img/schemat.png)
+
+> **Note:** this program is intended for simulation purposes only. It is not affiliated with or
+> endorsed by PKP Polskie Linie Kolejowe S.A. and must not be used to operate real railway traffic.
 
 ---
 
-## Spis treści
+## Contents
 
-- [Możliwości](#możliwości)
-- [Zrzuty ekranu](#zrzuty-ekranu)
-- [Instalacja i uruchomienie](#instalacja-i-uruchomienie)
-- [Praca z programem](#praca-z-programem)
-- [Obliczenia czasu jazdy](#obliczenia-czasu-jazdy-ir-11--21)
-- [Format pliku projektu](#format-pliku-projektu)
-- [Narzędzie wiersza poleceń](#narzędzie-wiersza-poleceń)
-- [Struktura repozytorium](#struktura-repozytorium)
-- [Licencja i autorstwo](#licencja-i-autorstwo)
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Installation](#installation)
+- [Using the program](#using-the-program)
+- [Running time calculation](#running-time-calculation-ir-11--21)
+- [Project file format](#project-file-format)
+- [Command-line tool](#command-line-tool)
+- [Repository layout](#repository-layout)
+- [License and authorship](#license-and-authorship)
 
-## Możliwości
+## Features
 
-### Karta rozkładu jazdy (PDF)
+### Timetable card (PDF)
 
-- **Strona tytułowa** wg Załącznika 5: wydawca, rodzaj rozkładu, „POCIĄGU NR …”, przewoźnik, wniosek,
-  zarządzenie (z generatorem sygnatur wg § 35), „wygenerowano w systemie … w dniu … r. o godz. …”,
-  stopka „Maszynisto!”.
-- **Strony szczegółowego rozkładu** z nagłówkiem i 9 kolumnami:
-  nr linii · km zmian prędkości (pogrubione zmiany na torze rozkładu) · V<sub>P</sub> · V<sub>L</sub>
-  (połączone na odcinkach jednotorowych) · stacja (pogrubienie stacji, wersaliki stacji węzłowych,
-  kilometr, skróty i znaki, kursywą kilometraż zmiany linii) · godzina (0,1 min w indeksie górnym,
-  „|” przy przejeździe, ramka zmiany numeru pociągu, czasy jazdy normalny/skrócony) · Lok I/II/III ·
-  obciążenie i długość · Vmax / % / rodzaj hamulca (wartości niezmienione na szaro).
-- **Strzałka kierunku jazdy** (tor prawy / lewy), **oznaczenie szlaku** (jedno- / dwutorowy),
-  **odnośniki** \*1), \*2) na stronie, na której występują, **„Kursuje:”** i **„Uwagi do rozkładu”**.
-- Strona **„Wykaz ostrzeżeń na trasie pociągu”** ze stratą czasu na każdym ostrzeżeniu.
-- Łamanie stron z zachowaniem ciągłości odcinków linii; arkusze **A5** lub **A4 poziomo – 2×A5**.
-- Osadzona czcionka Liberation Serif (metrycznie zgodna z Times New Roman).
+- **Title page** per Appendix 5: issuer, timetable type, “POCIĄGU NR …” (train no.), railway undertaking,
+  application, order (with a signature generator per § 35), “wygenerowano w systemie … w dniu … r. o godz. …”
+  (generated in system … on … at …), and the “Maszynisto!” (Driver!) footer.
+- **Detailed timetable pages** with a header and 9 columns:
+  line no. · km of speed changes (changes on the track the timetable is built for in bold) · V<sub>P</sub> ·
+  V<sub>L</sub> (merged on single-track sections) · station (bold stations, junction stations in capitals,
+  kilometre, abbreviations and symbols, line-change kilometrage in italics) · time (tenths of a minute as
+  superscript, “|” for passing, train-number change box, normal/shortened running times) · Loco I/II/III ·
+  load and length · Vmax / brake % / brake type (unchanged values in grey).
+- **Direction arrow** (right / left track), **line marker** (single / double track),
+  **footnotes** \*1), \*2) on the pages where they are used, **“Kursuje:”** (runs on) and
+  **“Uwagi do rozkładu”** (remarks).
+- **“Wykaz ostrzeżeń na trasie pociągu”** page (speed restrictions on the train's route) with the time
+  lost on each restriction.
+- Page breaks that keep line sections continuous; **A5** sheets or **A4 landscape – 2×A5**.
+- Embedded Liberation Serif font (metric-compatible with Times New Roman).
 
-![Strona tytułowa i strona 2 karty](docs/img/karta.png)
+![Title page and page 2 of a card](docs/img/karta.png)
 
-### Schemat scenerii
+### Scenery schematic
 
-- Wiele linii kolejowych: numer, nazwa, kolor, linia przerywana, prędkości domyślne, jedno/dwutorowa.
-- Posterunki: stacja (kółko), przystanek / posterunek (kreska), zamknięty (przekreślony), koniec linii;
-  ikony obsługi podróżnych, posterunku technicznego ⌘ i lotniska.
-- Odcinki prowadzone pod kątem 0/45/90° (5 stylów) z dowolną liczbą załamań, kilometraż na końcach,
-  zmiany prędkości V<sub>P</sub>/V<sub>L</sub>, blokada liniowa, elektryfikacja, omijanie bocznic przy
-  wyznaczaniu tras.
-- **Inspektor**: metadane klikniętego posterunku (nazwa, rodzaj, pogrubienie / wersaliki, skróty,
-  domyślny postój, czas postoju, godziny czynności, perony, notatki), odcinka lub linii.
-- **Ograniczenia prędkości posterunku** – dla wybranej linii, zakresu km i toru (np. geometria
-  głowicy, rozjazdy): wpisywane do kolumn 3–4 karty albo jako pozycja wykazu ostrzeżeń stałych.
-- **Tryb ciemny schematu** – przełącznik na pasku narzędzi (eksport PDF pozostaje jasny).
-- **Auto-kilometraż** linii według długości rysunku, eksport schematu do PDF (A3) z legendą.
+- Multiple railway lines: number, name, colour, dashed style, default speeds, single/double track.
+- Posts: station (circle), halt / block post (tick), closed (crossed out), end of line;
+  icons for passenger service, technical post ⌘ and airport.
+- Sections drawn at 0/45/90° (5 styles) with any number of bends, kilometrage at both ends,
+  V<sub>P</sub>/V<sub>L</sub> speed changes, block system, electrification, sidings avoided in route finding.
+- **Inspector**: metadata of the selected post (name, type, bold / capitals, abbreviations, default stop,
+  dwell time, opening hours, platforms, notes), section or line.
+- **Post speed restrictions** – for a chosen line, km range and track (e.g. station throat geometry,
+  turnouts): either written into card columns 3–4 or added as an entry in the list of permanent restrictions.
+- **Dark mode for the schematic** – toggle on the toolbar (PDF export stays light).
+- **Automatic kilometrage** of a line from the drawing length, export of the schematic to PDF (A3) with a legend.
 
-### Trasa pociągu ze schematu
+### Train route from the schematic
 
-Kliknij na schemacie początek, punkty pośrednie i koniec – droga wyznaczy się sama (najkrótsza,
-z preferencją jazdy tą samą linią). „Ułóż trasę w karcie” tworzy odcinki linii i wszystkie posterunki
-na drodze, ustala postoje według wybranej zasady (osobowy / przyspieszony / tylko wskazane / bez
-postojów) i od razu liczy czasy jazdy. Przystanki osobowe otrzymują rodzaj „po”, a postój handlowy
-„ph” pojawia się tylko tam, gdzie pociąg pasażerski faktycznie się zatrzymuje. Zmiana zasady postojów
-od razu poprawia kartę. Zakładki **Posterunki** i **Trasa** służą potem do dopracowania szczegółów
-(np. jazda torem lewym); ręczne zmiany są zapamiętywane i nie są nadpisywane przy ponownym ułożeniu trasy.
-Każdy szlak między posterunkami jest osobnym odcinkiem, więc tor prawy / lewy można wybrać dla dowolnego
-fragmentu trasy – w karcie kolejne odcinki tej samej linii drukowane są razem, a strzałka przechodzi
-między kolumnami w miejscu zmiany toru. Prędkości w kolumnach V<sub>P</sub>/V<sub>L</sub> są ograniczane
-do prędkości maksymalnej pociągu (Vmax), zgodnie z Ir-11 § 32 ust. 6 pkt 2 lit. e i f.
+Click the start, intermediate points and the end on the schematic – the path is found automatically
+(shortest, preferring to stay on the same line). “Ułóż trasę w karcie” (lay out route in the card) creates
+the line sections and every post along the way, sets stops according to the selected rule (stopping train /
+semi-fast / selected points only / no intermediate stops) and immediately calculates running times.
+Passenger halts get the “po” type, and the “ph” commercial stop mark appears only where a passenger train
+actually stops; halts the train passes without stopping are not printed on the card (they remain in the
+post list, and the running time covers the whole stretch to the next printed post). Changing the stop rule updates the card straight away. The **Posterunki** (posts) and
+**Trasa** (route) tabs are then used to fine-tune details (e.g. running on the left track); manual changes are
+remembered and not overwritten when the route is laid out again. Each stretch between two posts is a separate
+section, so the right / left track can be chosen for any part of the route – on the card, consecutive sections
+of the same line are printed together and the arrow switches columns where the track changes. Speeds in the
+V<sub>P</sub>/V<sub>L</sub> columns are capped at the train's maximum speed (Vmax), as required by
+Ir-11 § 32(6)(2)(e) and (f).
 
-### Ostrzeżenia
+### Speed restrictions
 
-Wykaz ostrzeżeń **stałych** (wliczanych do czasu technicznego) i **doraźnych** (rezerwa C) – linia,
-tor, km od–do, prędkość, rodzaj pociągów, przyczyna, ważność – oraz **generator ostrzeżeń doraźnych**
-(losowych, opcjonalnie z ziarnem) do urozmaicania jazd w symulatorze.
+A list of **permanent** restrictions (included in the technical running time) and **temporary** ones
+(reserve C) – line, track, km from–to, speed, train types, reason, validity – plus a **temporary restriction
+generator** (random, optionally seeded) to add variety to simulator runs.
 
-## Zrzuty ekranu
+## Screenshots
 
-| Inspektor posterunku | Posterunki pociągu |
+| Post inspector | Train posts |
 |---|---|
-| ![Inspektor](docs/img/inspektor.png) | ![Posterunki](docs/img/posterunki.png) |
+| ![Inspector](docs/img/inspektor.png) | ![Posts](docs/img/posterunki.png) |
 
-| Czasy jazdy i wykres v(s) | Ostrzeżenia |
+| Running times and v(s) chart | Speed restrictions |
 |---|---|
-| ![Czasy jazdy](docs/img/czasy-jazdy.png) | ![Ostrzeżenia](docs/img/ostrzezenia.png) |
+| ![Running times](docs/img/czasy-jazdy.png) | ![Restrictions](docs/img/ostrzezenia.png) |
 
-| Ekran startowy | Schemat w PDF |
+| Start screen | Schematic as PDF |
 |---|---|
-| ![Ekran startowy](docs/img/ekran-startowy.png) | ![Schemat PDF](docs/img/schemat-pdf.png) |
+| ![Start screen](docs/img/ekran-startowy.png) | ![Schematic PDF](docs/img/schemat-pdf.png) |
 
-## Instalacja i uruchomienie
+## Installation
 
-### Gotowa wersja dla Windows
+### Ready-made Windows build
 
-Pobierz paczkę z zakładki *Releases* (lub zbuduj ją sam – poniżej), rozpakuj i uruchom `SKSRJ.exe`.
-Wymagany jest [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) (x64).
+Download the package from *Releases* (or build it yourself – see below), unpack it and run `SKSRJ.exe`.
+The [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) (x64) is required.
 
-### Ze źródeł
+### From source
 
-Wymagany [.NET SDK 8](https://dotnet.microsoft.com/download/dotnet/8.0).
+Requires the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
 ```bash
 git clone https://github.com/Hirek193/sksrj.git
@@ -116,115 +122,114 @@ cd sksrj
 dotnet run --project src/Sksrj.App
 ```
 
-Publikacja:
+Publishing:
 
 ```bash
-# wymaga zainstalowanego .NET 8 Desktop Runtime
+# requires the .NET 8 Desktop Runtime to be installed
 dotnet publish src/Sksrj.App -c Release -r win-x64 --self-contained false -p:DebugType=none -o dist/SKSRJ
 
-# samodzielny plik wykonywalny (bez instalowania .NET)
+# self-contained single executable (no .NET installation needed)
 dotnet publish src/Sksrj.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true \
   -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -o dist/win-x64
 ```
 
-Analogicznie dla `-r linux-x64` lub `-r osx-arm64`.
+The same works with `-r linux-x64` or `-r osx-arm64`.
 
-## Praca z programem
+## Using the program
 
-| Sekcja | Zawartość |
+| Section | Contents |
 |---|---|
-| **Schemat** | plan scenerii, narzędzia rysowania, inspektor, układanie trasy pociągu |
-| **Pociąg** | rodzaj i numer pociągu, relacja, nagłówek, strona tytułowa, sygnatura zarządzenia, stopka |
-| **Trasa** | odcinki linii (kolumny 1–4): km, prędkości V<sub>P</sub>/V<sub>L</sub>, tor prawy/lewy |
-| **Posterunki** | posterunki (kolumny 5–9): nazwa, km, skróty, kursywy, godziny, czasy jazdy, numer pociągu, skład |
-| **Czasy jazdy** | profil trakcyjny, rezerwy, wykres v(s), wyniki A/B/C/D, wpisanie czasów do karty |
-| **Ostrzeżenia** | wykaz stałych i doraźnych, generator, ostrzeżenia na trasie pociągu |
-| **Uwagi** | „Kursuje:”, odnośniki, uwagi do rozkładu |
-| **Wydruk** | A5 / A4 2×A5, wykaz ostrzeżeń, dopisek „rozkład symulacyjny”, projekt, motyw |
+| **Schemat** (schematic) | scenery map, drawing tools, inspector, laying out the train route |
+| **Pociąg** (train) | train category and number, relation, header, title page, order signature, footer |
+| **Trasa** (route) | line sections (columns 1–4): km, V<sub>P</sub>/V<sub>L</sub> speeds, right/left track |
+| **Posterunki** (posts) | posts (columns 5–9): name, km, abbreviations, italics, times, running times, train number, consist |
+| **Czasy jazdy** (running times) | traction profile, reserves, v(s) chart, A/B/C/D results, writing times into the card |
+| **Ostrzeżenia** (restrictions) | permanent and temporary restrictions, generator, restrictions on the train's route |
+| **Uwagi** (remarks) | “Kursuje:”, footnotes, timetable remarks |
+| **Wydruk** (print) | A5 / A4 2×A5, restriction list, “simulation timetable” note, project, theme |
 
-**Skróty klawiszowe:** `Ctrl+N` nowy projekt · `Ctrl+O` otwórz · `Ctrl+S` zapisz · `Ctrl+Shift+S`
-zapisz jako · `Ctrl+E` eksport PDF · `F5` odśwież podgląd.
-**Na schemacie:** `V` zaznacz · `N` posterunek · `C` połącz · `T` trasa · `F` dopasuj widok ·
-`Delete` usuń · `Esc` przerwij · kółko myszy – powiększenie · prawy przycisk – przesuwanie ·
-dwuklik na odcinku – załamanie · `Shift` – bez przyciągania do siatki.
+**Keyboard shortcuts:** `Ctrl+N` new project · `Ctrl+O` open · `Ctrl+S` save · `Ctrl+Shift+S` save as ·
+`Ctrl+E` export PDF · `F5` refresh preview.
+**On the schematic:** `V` select · `N` post · `C` connect · `T` route · `F` fit view · `Delete` delete ·
+`Esc` cancel · mouse wheel – zoom · right button – pan · double-click on a section – add a bend ·
+`Shift` – no grid snapping.
 
-**Wskazówki dot. danych**
+**Data entry tips**
 
-- Godziny: `06:28`, `06:28.1` (→ 06:28¹), `06:28:30`; czasy jazdy: `3`, `3.5` (→ 3⁵).
-- Kilometr posterunku może mieć dwie wartości na styku linii, np. `8.317/1.558`.
-- Skróty w kilku wierszach – Enter w polu „Skróty”; ostatni wiersz drukowany jest obok kilometra.
-- Puste pola składu = bez zmian względem poprzedniego posterunku (na karcie na szaro).
-- Tor nr 1 = tor prawy przy jeździe w kierunku rosnącego kilometrażu.
+- Times: `06:28`, `06:28.1` (→ 06:28¹), `06:28:30`; running times: `3`, `3.5` (→ 3⁵).
+- A post can have two kilometre values where lines meet, e.g. `8.317/1.558`.
+- Multi-line abbreviations – press Enter in the abbreviations field; the last line is printed next to the kilometre.
+- Empty consist fields = unchanged from the previous post (printed in grey on the card).
+- Track no. 1 = the right-hand track when travelling towards increasing kilometrage.
 
-## Obliczenia czasu jazdy (Ir-11 § 21)
+## Running time calculation (Ir-11 § 21)
 
-| Składnik | Sposób liczenia |
+| Component | Method |
 |---|---|
-| **A** – techniczny czas jazdy | całkowanie ruchu co 10 m: rozruch (przyspieszenie ograniczone mocą jednostkową i oporami ruchu), hamowanie służbowe, prędkości dopuszczalne, ostrzeżenia stałe, Vmax składu i długość pociągu |
-| **B** – rezerwa eksploatacyjna | wg § 21 ust. 6 pkt 2: EIJ 2,5; EC/EN/EI/MH/MM/MP/RP 3; TC/TD 3; pozostałe pasażerskie 5; towarowe i utrzymaniowe 7; niehandlowe 5; luzem 3 min/100 km (lub wartość własna) |
-| **C** – rezerwa modernizacyjna | strata czasu na ostrzeżeniach doraźnych |
-| **D** – postoje | minimalne wg § 22 ust. 11 (0,5 min; 0,3 min dla zespołów trakcyjnych; 1 min MP/MM z wagonów; 2 min z wagonami sypialnymi) lub podane |
+| **A** – technical running time | motion integrated every 10 m: acceleration (limited by power per tonne and running resistance), service braking, permitted speeds, permanent restrictions, train Vmax and train length |
+| **B** – operating reserve | per § 21(6)(2): EIJ 2.5; EC/EN/EI/MH/MM/MP/RP 3; TC/TD 3; other passenger 5; freight and maintenance 7; non-commercial 5; light engine 3 min/100 km (or a custom value) |
+| **C** – modernisation reserve | time lost on temporary restrictions |
+| **D** – stops | minimum per § 22(11) (0.5 min; 0.3 min for multiple units; 1 min for MP/MM with coaches; 2 min with sleeping cars) or as entered |
 
-Licznik (czas normalny) = A+B+C, mianownik (czas skrócony) = A+C. Godziny zaokrąglane wg § 21 ust. 9
-(stacje początkowe i końcowe – pełne minuty, węzłowe – 0,5 min, pozostałe – 0,1 min).
-Dostępnych jest 10 profili trakcyjnych (EN57, Elf, SA, ED250, EU07/EP09 z wagonami, ET22 z 2000 t,
-pociąg intermodalny, lokomotywy luzem). Model trakcyjny jest uproszczony – wyniki są szacunkiem na
-potrzeby symulacji.
+Numerator (normal time) = A+B+C, denominator (shortened time) = A+C. Times are rounded per § 21(9)
+(origin and destination stations – whole minutes, junction stations – 0.5 min, others – 0.1 min).
+10 traction profiles are available (EN57, Elf, SA, ED250, EU07/EP09 with coaches, ET22 with 2000 t,
+intermodal train, light engines). The traction model is simplified – results are estimates for simulation use.
 
-## Format pliku projektu
+## Project file format
 
-`*.sksrj` to czytelny JSON: `TimetableProject` → `Scenery` (linie, posterunki, odcinki),
-`Restrictions` (ostrzeżenia) i `Timetables[]` (karty: odcinki linii, posterunki, odnośniki, trasa
-na schemacie, parametry obliczeń). Format łatwo generować z innych narzędzi, np. z danych scenerii.
+`*.sksrj` is human-readable JSON: `TimetableProject` → `Scenery` (lines, posts, sections),
+`Restrictions` and `Timetables[]` (cards: line sections, posts, footnotes, route on the schematic,
+calculation parameters). The format is easy to generate from other tools, e.g. from scenery data.
 
-Projekt przykładowy (wczytywany przy starcie, także w `samples/`) zawiera schemat scenerii
-Kaletnik – Rypinek – Leosin – Sosiny (9 linii, 82 posterunki), dwa pociągi ułożone na schemacie
-(osobowy ROJ 63215 i towarowy TME 44210), przykładowe ostrzeżenia, kartę wpisaną ręcznie oraz
-odwzorowanie przykładowej karty z Załącznika 5 do Ir-11.
+The sample project (loaded at start-up, also in `samples/`) contains the Kaletnik – Rypinek – Leosin – Sosiny
+scenery schematic (9 lines, 82 posts), two trains laid out on the schematic (stopping train ROJ 63215 and
+freight train TME 44210), sample restrictions, a manually entered card, and a reproduction of the sample
+card from Appendix 5 to Ir-11.
 
-## Narzędzie wiersza poleceń
+## Command-line tool
 
 ```bash
-dotnet run --project tools/Sksrj.Cli -- projekt.sksrj wynik.pdf [indeks|all] [a5|a4]   # karty
-dotnet run --project tools/Sksrj.Cli -- --scheme projekt.sksrj schemat.pdf             # schemat
-dotnet run --project tools/Sksrj.Cli -- --sample katalog                               # przykłady
+dotnet run --project tools/Sksrj.Cli -- project.sksrj output.pdf [index|all] [a5|a4]   # cards
+dotnet run --project tools/Sksrj.Cli -- --scheme project.sksrj scheme.pdf             # schematic
+dotnet run --project tools/Sksrj.Cli -- --sample directory                            # samples
 ```
 
-## Struktura repozytorium
+## Repository layout
 
 ```
-src/Sksrj.Core     model danych, słowniki Ir-11, skład karty (Layout/), schemat, trasy,
-                   obliczenia trakcyjne i ostrzeżenia (Engine/), eksport PDF (Pdf/)
-src/Sksrj.App      aplikacja Avalonia (MVVM), motyw Material Design 3 (Styles/), widoki (Views/)
-tools/Sksrj.Cli    generowanie PDF z wiersza poleceń
-samples/           projekt przykładowy i wygenerowane z niego PDF-y
-docs/img/          zrzuty ekranu
+src/Sksrj.Core     data model, Ir-11 dictionaries, card layout (Layout/), schematic, routing,
+                   traction calculations and restrictions (Engine/), PDF export (Pdf/)
+src/Sksrj.App      Avalonia application (MVVM), Material Design 3 theme (Styles/), views (Views/)
+tools/Sksrj.Cli    PDF generation from the command line
+samples/           sample project and PDFs generated from it
+docs/img/          screenshots
 ```
 
-## Licencja i autorstwo
+## License and authorship
 
 **SKSRJ Timetable generator** – Copyright © 2026 Oskar Jagodziński.
 
-Program jest wolnym oprogramowaniem: możesz go rozpowszechniać i modyfikować na warunkach
-[GNU General Public License](LICENSE) w wersji 3 lub (według uznania) dowolnej późniejszej, wraz
-z [warunkami dodatkowymi](ADDITIONAL_TERMS) wg § 7 tej licencji. W skrócie warunki dodatkowe wymagają:
+This program is free software: you can redistribute it and/or modify it under the terms of the
+[GNU General Public License](LICENSE) version 3 or (at your option) any later version, together with the
+[additional terms](ADDITIONAL_TERMS) under Section 7 of that License. In short, the additional terms require:
 
-1. **zachowania atrybucji** w plikach źródłowych i w informacjach prawnych programu (w interfejsie –
-   w miejscu łatwo dostępnym, np. na ekranie startowym lub w oknie „O programie”):
+1. **preserving the attribution** in the source files and in the program's legal notices (in the user
+   interface – in an easily accessible place, e.g. the start screen or the “About” window):
 
    ```
    Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
    Original source: https://github.com/Hirek193/sksrj
    ```
 
-2. **wyraźnego oznaczania zmienionych wersji** jako innych niż oryginał,
-3. **nieużywania nazwy „SKSRJ Timetable generator” i logo** jako nazwy własnej wersji zmienionej bez
-   pisemnej zgody autora.
+2. **clearly marking modified versions** as different from the original,
+3. **not using the name “SKSRJ Timetable generator” or its logo** as the name of a modified version
+   without the author's written permission.
 
-Program jest rozpowszechniany **bez jakiejkolwiek gwarancji**. Pełne teksty: [`LICENSE`](LICENSE),
-[`ADDITIONAL_TERMS`](ADDITIONAL_TERMS). Licencje użytych bibliotek i czcionek (MIT, Apache 2.0,
-SIL OFL 1.1) opisuje [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md); są one dostępne również
-w programie (przycisk ⓘ „O programie”).
+The program is distributed **without any warranty**. Full texts: [`LICENSE`](LICENSE),
+[`ADDITIONAL_TERMS`](ADDITIONAL_TERMS). Licenses of the libraries and fonts used (MIT, Apache 2.0,
+SIL OFL 1.1) are listed in [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md); they are also available
+in the program (ⓘ “O programie” / About button).
 
-Wygląd kart rozkładu jazdy oraz słowniki znaków i skrótów oparto na instrukcji Ir-11; prawa do
-instrukcji przysługują PKP Polskie Linie Kolejowe S.A.
+The layout of the timetable cards and the dictionaries of symbols and abbreviations are based on the Ir-11
+instruction; the rights to the instruction belong to PKP Polskie Linie Kolejowe S.A.

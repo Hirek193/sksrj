@@ -218,6 +218,7 @@ public partial class MainViewModel : ObservableObject
         if (SelectedTimetable == null) { PreviewPages = null; OnPropertyChanged(nameof(WarningCount)); return; }
         try
         {
+            TimetableTools.UpdateHiddenFlags(SelectedTimetable);
             var r = TimetableLayout.Build(SelectedTimetable, Project.Print, _measurer, null, RestrictionTools.Effective(Project));
             PreviewPages = r.Pages;
             foreach (var w in r.Warnings.Distinct()) Warnings.Add(w);

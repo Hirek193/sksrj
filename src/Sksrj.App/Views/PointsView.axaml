@@ -15,6 +15,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Sksrj.App.ViewModels"
+             xmlns:app="using:Sksrj.App"
              xmlns:m="using:Sksrj.Core.Model"
              xmlns:dict="using:Sksrj.Core.Dictionaries"
              xmlns:mi="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
@@ -48,6 +49,8 @@
           </StackPanel>
         </StackPanel>
       </Border>
+      <CheckBox IsChecked="{Binding SelectedTimetable.HidePassedHalts}" Margin="8,0,0,0" FontSize="12"
+                Content="Pomijaj w karcie przystanki osobowe „po” bez postoju" />
       <StackPanel Orientation="Horizontal" Spacing="2">
         <Button Classes="icon" Command="{Binding AddPointCommand}" ToolTip.Tip="Dodaj posterunek za zaznaczonym"><mi:MaterialIcon Kind="PlaylistPlus" /></Button>
         <Button Classes="icon" Command="{Binding DuplicatePointCommand}" ToolTip.Tip="Powiel posterunek"><mi:MaterialIcon Kind="ContentCopy" /></Button>
@@ -65,9 +68,10 @@
                                  Foreground="{DynamicResource Md.Primary}" IsVisible="{Binding Bold}" />
                 <mi:MaterialIcon Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center" Kind="CircleSmall"
                                  Foreground="{DynamicResource Md.OnSurfaceVariant}" IsVisible="{Binding !Bold}" />
-                <StackPanel Grid.Column="1" Spacing="1">
+                <StackPanel Grid.Column="1" Spacing="1" Opacity="{Binding HiddenInCard, Converter={x:Static app:Conv.HiddenOpacity}}">
                   <TextBlock Text="{Binding ListTitle}" FontSize="14" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
                   <TextBlock Text="{Binding ListSubtitle}" FontSize="12" Classes="muted" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="przejazd bez postoju – nie drukowany w karcie" FontSize="11" FontStyle="Italic" Classes="muted" IsVisible="{Binding HiddenInCard}" />
                 </StackPanel>
               </Grid>
             </DataTemplate>

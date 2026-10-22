@@ -391,10 +391,25 @@ public sealed class TimetableLayout
         string? prevBox = null;
         var stock = new string[8];
         int secPtr = 0; double prevS = 0;
+        var pendingStock = false;
 
         for (var i = 0; i < pts.Count; i++)
         {
             var p = pts[i];
+            if (TimetableTools.IsHiddenInCard(_t, i))
+            {
+                // przystanek osobowy bez postoju – nie jest drukowany; zmiany numeru pociągu i składu
+                // przechodzą na następny drukowany posterunek
+                if (!string.IsNullOrWhiteSpace(p.TrainCategory)) effCat = p.TrainCategory.Trim();
+                if (!string.IsNullOrWhiteSpace(p.TrainNumber)) effNum = p.TrainNumber.Trim();
+                var hv = new[] { p.Loco1, p.Loco2, p.Loco3, p.LocoLoad, p.TrainLength, p.Vmax, p.BrakePercent, p.BrakeType };
+                for (var k = 0; k < 8; k++)
+                {
+                    var v = (hv[k] ?? "").Trim();
+                    if (v.Length > 0 && v != (stock[k] ?? "")) { pendingStock = true; stock[k] = v; }
+                }
+                continue;
+            }
             var r = new Row { P = p, Index = i };
 
             // --- położenie na trasie (s)
@@ -433,7 +448,8 @@ public sealed class TimetableLayout
                 if (v.Length > 0 && v != (stock[k] ?? "")) { changed = true; stock[k] = v; }
             }
             r.Stock = stock.Select(s => s ?? "").ToArray();
-            r.StockChanged = changed || i == 0;
+            r.StockChanged = changed || pendingStock || i == 0;
+            pendingStock = false;
 
             r.Lines = Math.Max(2, r.TopLines.Count + r.BottomLines.Count);
             if (r.Box != null) r.Lines = Math.Max(3, r.Lines);
