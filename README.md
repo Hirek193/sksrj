@@ -144,7 +144,7 @@ The same works with `-r linux-x64` or `-r osx-arm64`.
 | **Czasy jazdy** (running times) | traction profile, reserves, v(s) chart, A/B/C/D results, writing times into the card |
 | **Ostrzeżenia** (restrictions) | permanent and temporary restrictions, generator, restrictions on the train's route |
 | **Uwagi** (remarks) | “Kursuje:”, footnotes, timetable remarks |
-| **Wydruk** (print) | A5 / A4 2×A5, restriction list, “simulation timetable” note, project, theme |
+| **Wydruk** (print) | A5 / A4 2×A5, restriction list, grey background for commercial stop (ph) times, “simulation timetable” note, project, theme |
 
 **Keyboard shortcuts:** `Ctrl+N` new project · `Ctrl+O` open · `Ctrl+S` save · `Ctrl+Shift+S` save as ·
 `Ctrl+E` export PDF · `F5` refresh preview.

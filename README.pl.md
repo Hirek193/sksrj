@@ -144,7 +144,7 @@ Analogicznie dla `-r linux-x64` lub `-r osx-arm64`.
 | **Czasy jazdy** | profil trakcyjny, rezerwy, wykres v(s), wyniki A/B/C/D, wpisanie czasów do karty |
 | **Ostrzeżenia** | wykaz stałych i doraźnych, generator, ostrzeżenia na trasie pociągu |
 | **Uwagi** | „Kursuje:”, odnośniki, uwagi do rozkładu |
-| **Wydruk** | A5 / A4 2×A5, wykaz ostrzeżeń, dopisek „rozkład symulacyjny”, projekt, motyw |
+| **Wydruk** | A5 / A4 2×A5, wykaz ostrzeżeń, szare tło godzin postojów handlowych (ph), dopisek „rozkład symulacyjny”, projekt, motyw |
 
 **Skróty klawiszowe:** `Ctrl+N` nowy projekt · `Ctrl+O` otwórz · `Ctrl+S` zapisz · `Ctrl+Shift+S`
 zapisz jako · `Ctrl+E` eksport PDF · `F5` odśwież podgląd.
