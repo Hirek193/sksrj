@@ -96,8 +96,12 @@ public sealed class DeepChangeTracker : IDisposable
         }
     }
 
+    /// <summary>Właściwości pomocnicze (wyliczane przez program) – ich zmiana nie oznacza zmiany projektu.</summary>
+    private static readonly HashSet<string> Derived = new() { nameof(RoutePoint.HiddenInCard) };
+
     private void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName != null && Derived.Contains(e.PropertyName)) return;
         // podmiana obiektu podrzędnego – przepnij śledzenie
         if (sender != null && e.PropertyName != null)
         {

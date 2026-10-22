@@ -101,6 +101,8 @@ public partial class Timetable : ObservableObject
     [ObservableProperty] private string _remarks = "";
     /// <summary>Prędkości w kolumnach 3–4 ograniczone do prędkości maksymalnej pociągu (Vmax, kol. 9) – Ir-11 § 32 ust. 6 pkt 2 lit. e, f.</summary>
     [ObservableProperty] private bool _capSpeedsToVmax = true;
+    /// <summary>Przystanki osobowe („po”), na których pociąg nie ma postoju, nie są drukowane w karcie.</summary>
+    [ObservableProperty] private bool _hidePassedHalts = true;
 
     public ObservableCollection<Footnote> Footnotes { get; set; } = new();
     public ObservableCollection<LineSection> Sections { get; set; } = new();
@@ -232,6 +234,10 @@ public partial class RoutePoint : ObservableObject
     [ObservableProperty] private bool _manualInfra;
     /// <summary>Postój (postój, rodzaj postoju, czas postoju) zmieniono ręcznie – nie nadpisuj zasadą postojów trasy.</summary>
     [ObservableProperty] private bool _manualStop;
+    /// <summary>Posterunek pomijany w karcie (przystanek osobowy bez postoju) – tylko informacja dla edytora.</summary>
+    [ObservableProperty]
+    [property: JsonIgnore]
+    private bool _hiddenInCard;
 
     [JsonIgnore]
     public string ListTitle => string.IsNullOrWhiteSpace(Name) ? "(bez nazwy)" : (Uppercase ? Name.ToUpperInvariant() : Name) + (string.IsNullOrWhiteSpace(TypeSuffix) ? "" : " " + TypeSuffix);

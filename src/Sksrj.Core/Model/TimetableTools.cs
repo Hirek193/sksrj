@@ -18,6 +18,27 @@ namespace Sksrj.Core.Model;
 public static class TimetableTools
 {
     /// <summary>
+    /// Czy posterunek jest pomijany w karcie: przystanek osobowy („po”) bez postoju pociągu
+    /// (pierwszy i ostatni posterunek trasy są zawsze drukowane).
+    /// </summary>
+    public static bool IsHiddenInCard(Timetable t, int i)
+    {
+        if (!t.HidePassedHalts || i <= 0 || i >= t.Points.Count - 1) return false;
+        var p = t.Points[i];
+        return !p.Stop && string.Equals((p.TypeSuffix ?? "").Trim().TrimEnd('.'), "po", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Aktualizuje znacznik <see cref="RoutePoint.HiddenInCard"/> wszystkich posterunków karty.</summary>
+    public static void UpdateHiddenFlags(Timetable t)
+    {
+        for (var i = 0; i < t.Points.Count; i++)
+        {
+            var h = IsHiddenInCard(t, i);
+            if (t.Points[i].HiddenInCard != h) t.Points[i].HiddenInCard = h;
+        }
+    }
+
+    /// <summary>
     /// Przelicza godziny: od odjazdu z pierwszego posterunku, dodając czasy jazdy (normalne, a gdy brak – skrócone)
     /// oraz czasy postoju na posterunkach z postojem. Zwraca liczbę zmienionych posterunków.
     /// </summary>
@@ -56,9 +77,12 @@ public static class TimetableTools
     {
         var pts = t.Points;
         var changed = 0;
+        var prevIdx = 0;
         for (var i = 1; i < pts.Count; i++)
         {
-            var prev = pts[i - 1];
+            if (IsHiddenInCard(t, i)) continue; // czas jazdy liczony do następnego drukowanego posterunku
+            var prev = pts[prevIdx];
+            prevIdx = i;
             var prevStr = string.IsNullOrWhiteSpace(prev.Departure) ? prev.Arrival : prev.Departure;
             var p = pts[i];
             var curStr = (p.Stop || i == pts.Count - 1) && !string.IsNullOrWhiteSpace(p.Arrival) ? p.Arrival : (string.IsNullOrWhiteSpace(p.Departure) ? p.Arrival : p.Departure);

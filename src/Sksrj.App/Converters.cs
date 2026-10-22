@@ -53,3 +53,9 @@ public sealed class HexBrushConverter : IValueConverter
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
+
+public static class Conv
+{
+    /// <summary>Przyciemnienie posterunków pomijanych w karcie.</summary>
+    public static readonly IValueConverter HiddenOpacity = new Avalonia.Data.Converters.FuncValueConverter<bool, double>(b => b ? 0.55 : 1.0);
+}

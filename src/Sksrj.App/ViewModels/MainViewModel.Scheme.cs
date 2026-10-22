@@ -514,6 +514,9 @@ public partial class MainViewModel
             if (InfraProps.Contains(prop) && !rp.ManualInfra) rp.ManualInfra = true;
             if (StopProps.Contains(prop) && !rp.ManualStop) rp.ManualStop = true;
         }
+        // postój na przystanku lub pomijanie przystanków zmienia szlaki w karcie – przelicz czasy jazdy
+        if ((sender is RoutePoint && prop == nameof(RoutePoint.Stop)) || (ReferenceEquals(sender, t) && prop == nameof(Timetable.HidePassedHalts)))
+            QueueLinkedUpdate(stops: false);
         if (sender is LineSection ts && t.Sections.Contains(ts) && prop == nameof(LineSection.Track))
         {
             // wybór toru nie jest „ręczną zmianą odcinków” – zachowuje się przy ponownym ułożeniu trasy
@@ -549,7 +552,7 @@ public partial class MainViewModel
                 var res = RunTimeCalculator.Calculate(t, RestrictionTools.Effective(Project));
                 RunTimeCalculator.Apply(t, res);
                 if (doStops) Toast(changed == 0 ? "Zasada postojów bez zmian w karcie" : $"Zmieniono postoje na {changed} posterunkach i przeliczono czasy jazdy");
-                else Toast("Zmieniono tor jazdy – przeliczono czasy jazdy");
+                else Toast("Przeliczono czasy jazdy");
             }
             finally { _applyingRoute = false; }
             Relayout();
