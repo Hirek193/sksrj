@@ -67,6 +67,9 @@
             <mi:MaterialIcon Kind="DotsVertical" />
             <Button.Flyout>
               <MenuFlyout Placement="BottomEdgeAlignedRight">
+                <MenuItem Header="Eksportuj schemat do pliku…" Command="{Binding ExportSceneryCommand}" />
+                <MenuItem Header="Importuj schemat z pliku…" Command="{Binding ImportSceneryCommand}" />
+                <Separator />
                 <MenuItem Header="Nowy (pusty) schemat" Command="{Binding NewSceneryCommand}" />
                 <MenuItem Header="Wczytaj schemat przykładowy" Command="{Binding LoadSampleSceneryCommand}" />
               </MenuFlyout>

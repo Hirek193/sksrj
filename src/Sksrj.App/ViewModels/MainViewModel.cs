@@ -30,6 +30,12 @@ namespace Sksrj.App.ViewModels;
 
 public sealed record NavItem(string Label, Material.Icons.MaterialIconKind Icon);
 
+/// <summary>Pozycja banku wydawców / przewoźników (wiersze nagłówka rozdzielone znakiem nowej linii).</summary>
+public sealed record BankEntry(string Value)
+{
+    public string Display => Value.Replace("\r", "").Replace("\n", " / ");
+}
+
 public partial class MainViewModel : ObservableObject
 {
     private readonly IDialogService _dialogs;
@@ -51,6 +57,44 @@ public partial class MainViewModel : ObservableObject
         IsDark = _settings.IsDark;
         SchemeDark = _settings.SchemeDark;
         _loadingSettings = false;
+        foreach (var x in _settings.Issuers ?? AppSettings.DefaultIssuers.ToList()) IssuerBank.Add(new BankEntry(x));
+        foreach (var x in _settings.Carriers ?? AppSettings.DefaultCarriers.ToList()) CarrierBank.Add(new BankEntry(x));
+    }
+
+    // ================================================================ bank wydawców i przewoźników
+    public ObservableCollection<BankEntry> IssuerBank { get; } = new();
+    public ObservableCollection<BankEntry> CarrierBank { get; } = new();
+
+    private void SaveBank()
+    {
+        _settings.Issuers = IssuerBank.Select(x => x.Value).ToList();
+        _settings.Carriers = CarrierBank.Select(x => x.Value).ToList();
+        _settings.Save();
+    }
+
+    [RelayCommand] private void UseIssuer(BankEntry e) { if (SelectedTimetable != null) SelectedTimetable.Issuer = e.Value; }
+    [RelayCommand] private void UseCarrier(BankEntry e) { if (SelectedTimetable != null) SelectedTimetable.Carrier = e.Value; }
+    [RelayCommand] private void RemoveIssuer(BankEntry e) { IssuerBank.Remove(e); SaveBank(); }
+    [RelayCommand] private void RemoveCarrier(BankEntry e) { CarrierBank.Remove(e); SaveBank(); }
+
+    [RelayCommand]
+    private void SaveIssuerToBank()
+    {
+        var v = (SelectedTimetable?.Issuer ?? "").Replace("\r", "").Trim();
+        if (v.Length == 0) { Toast("Wpisz najpierw nagłówek wydawcy"); return; }
+        if (IssuerBank.Any(x => x.Value == v)) { Toast("Ten wydawca jest już w banku"); return; }
+        IssuerBank.Add(new BankEntry(v)); SaveBank();
+        Toast("Zapisano wydawcę w banku");
+    }
+
+    [RelayCommand]
+    private void SaveCarrierToBank()
+    {
+        var v = (SelectedTimetable?.Carrier ?? "").Trim();
+        if (v.Length == 0) { Toast("Wpisz najpierw przewoźnika"); return; }
+        if (CarrierBank.Any(x => x.Value == v)) { Toast("Ten przewoźnik jest już w banku"); return; }
+        CarrierBank.Add(new BankEntry(v)); SaveBank();
+        Toast("Zapisano przewoźnika w banku");
     }
 
     private readonly AppSettings _settings = AppSettings.Load();
@@ -69,6 +113,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand] private void ToggleSchemeTheme() => SchemeDark = !SchemeDark;
 
     public string AppName => AppInfo.Name;
+    public string CardFontText => "Czcionka karty: " + EmbeddedFontResolver.FontDescription;
 
     private readonly DispatcherTimer _clock;
 

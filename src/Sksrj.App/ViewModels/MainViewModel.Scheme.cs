@@ -382,6 +382,25 @@ public partial class MainViewModel
     }
 
     [RelayCommand]
+    private async Task BatchDwell()
+    {
+        var t = SelectedTimetable; if (t == null) return;
+        var vm = new DwellBatchViewModel(t);
+        if (!await _dialogs.ShowDwellBatchAsync(vm)) return;
+        int n;
+        _applyingRoute = true; // zbiorcze ustawienie nie jest „ręczną zmianą postoju” – zasada postojów trasy dalej działa
+        try
+        {
+            n = vm.Apply();
+            var res = RunTimeCalculator.Calculate(t, RestrictionTools.Effective(Project));
+            if (res.Ok) RunTimeCalculator.Apply(t, res);
+        }
+        finally { _applyingRoute = false; }
+        Relayout();
+        Toast(n == 0 ? "Nie zaznaczono żadnego postoju" : $"Ustawiono czas postoju na {n} posterunkach i przeliczono czasy jazdy");
+    }
+
+    [RelayCommand]
     private void SetAllTracks(string side)
     {
         var t = SelectedTimetable; if (t == null) return;
@@ -447,6 +466,43 @@ public partial class MainViewModel
             Toast($"Zapisano {Path.GetFileName(path)}");
         }
         catch (Exception ex) { Toast("Błąd eksportu: " + ex.Message); }
+    }
+
+    [RelayCommand]
+    private async Task ExportScenery()
+    {
+        var path = await _dialogs.SaveSceneryAsync(SafeName(Project.Scenery.Name) + ProjectSerializer.SceneryExtension);
+        if (path == null) return;
+        try { ProjectSerializer.SaveScenery(Project.Scenery, path); Toast($"Zapisano schemat {Path.GetFileName(path)}"); }
+        catch (Exception ex) { Toast("Błąd zapisu schematu: " + ex.Message); }
+    }
+
+    [RelayCommand]
+    private async Task ImportScenery()
+    {
+        var path = await _dialogs.OpenSceneryAsync();
+        if (path == null) return;
+        Scenery sc;
+        try { sc = ProjectSerializer.LoadScenery(path); }
+        catch (Exception ex) { Toast("Nie można wczytać schematu: " + ex.Message); return; }
+        if (Project.Scenery.Nodes.Count > 0 && !await _dialogs.ConfirmAsync("Import schematu",
+                $"Zastąpić bieżący schemat schematem „{sc.Name}” ({sc.Nodes.Count} posterunków, {sc.Lines.Count} linii)? Karty pociągów zostaną zachowane; trasy, których posterunków nie ma w nowym schemacie, zostaną odłączone.", "Importuj"))
+            return;
+        Project.Scenery = sc;
+        var unlinked = 0;
+        foreach (var t in Project.Timetables)
+        {
+            if (t.Route.Waypoints.Count > 0 && t.Route.Waypoints.Any(id => sc.Node(id) == null))
+            {
+                t.Route.Waypoints.Clear();
+                if (t.Route.Linked) { t.Route.Linked = false; unlinked++; }
+            }
+        }
+        CurrentLine = sc.Lines.FirstOrDefault();
+        ClearSelection();
+        RecomputeRoute();
+        FitSchemeRequested?.Invoke();
+        Toast($"Zaimportowano schemat „{sc.Name}”" + (unlinked > 0 ? $" – odłączono {unlinked} tras" : ""));
     }
 
     [RelayCommand]

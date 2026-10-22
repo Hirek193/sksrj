@@ -21,7 +21,10 @@ namespace Sksrj.App.Controls;
 /// <summary>Rysuje operacje z <see cref="PageDrawing"/> w Avalonii (te same, które trafiają do PDF).</summary>
 public sealed class OpsRenderer
 {
-    private static readonly FontFamily Serif = new("avares://SKSRJ/Assets/Fonts#Liberation Serif");
+    // Times New Roman z systemu (jak w PDF); bez niej – wbudowana, metrycznie zgodna Liberation Serif
+    private static readonly FontFamily Serif = Sksrj.Core.Pdf.EmbeddedFontResolver.SystemTimesAvailable
+        ? new FontFamily("Times New Roman")
+        : new FontFamily("avares://SKSRJ/Assets/Fonts#Liberation Serif");
     private static readonly FontFamily Sans = new("avares://SKSRJ/Assets/Fonts#Liberation Sans");
     private readonly Dictionary<(bool, bool, bool), Typeface> _faces = new();
     private readonly Dictionary<Rgb, IBrush> _brushes = new();

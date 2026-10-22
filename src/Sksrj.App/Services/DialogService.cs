@@ -21,8 +21,11 @@ public interface IDialogService
     Task<string?> OpenProjectAsync();
     Task<string?> SaveProjectAsync(string suggestedName);
     Task<string?> SavePdfAsync(string suggestedName);
+    Task<string?> OpenSceneryAsync();
+    Task<string?> SaveSceneryAsync(string suggestedName);
     Task<bool> ConfirmAsync(string title, string message, string ok = "OK", string cancel = "Anuluj");
     Task ShowAboutAsync();
+    Task<bool> ShowDwellBatchAsync(ViewModels.DwellBatchViewModel vm);
 }
 
 public sealed class DialogService : IDialogService
@@ -31,6 +34,7 @@ public sealed class DialogService : IDialogService
     public DialogService(Window owner) => _owner = owner;
 
     private static readonly FilePickerFileType ProjectType = new("Projekt SKSRJ") { Patterns = new[] { "*.sksrj" } };
+    private static readonly FilePickerFileType SceneryType = new("Schemat scenerii SKSRJ") { Patterns = new[] { "*.sksrjs" } };
     private static readonly FilePickerFileType JsonType = new("JSON") { Patterns = new[] { "*.json" } };
     private static readonly FilePickerFileType PdfType = new("Dokument PDF") { Patterns = new[] { "*.pdf" }, MimeTypes = new[] { "application/pdf" } };
 
@@ -70,6 +74,33 @@ public sealed class DialogService : IDialogService
         });
         return res?.TryGetLocalPath();
     }
+
+    public async Task<string?> OpenSceneryAsync()
+    {
+        var res = await _owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Importuj schemat scenerii",
+            AllowMultiple = false,
+            FileTypeFilter = new[] { SceneryType, ProjectType, JsonType, FilePickerFileTypes.All },
+        });
+        return res.Count > 0 ? res[0].TryGetLocalPath() : null;
+    }
+
+    public async Task<string?> SaveSceneryAsync(string suggestedName)
+    {
+        var res = await _owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Eksportuj schemat scenerii",
+            SuggestedFileName = suggestedName,
+            DefaultExtension = "sksrjs",
+            FileTypeChoices = new[] { SceneryType },
+            ShowOverwritePrompt = true,
+        });
+        return res?.TryGetLocalPath();
+    }
+
+    public Task<bool> ShowDwellBatchAsync(ViewModels.DwellBatchViewModel vm) =>
+        new Views.DwellBatchWindow { DataContext = vm }.ShowDialog<bool>(_owner);
 
     public Task ShowAboutAsync() => new Views.AboutWindow().ShowDialog(_owner);
 

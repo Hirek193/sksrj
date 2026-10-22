@@ -32,15 +32,19 @@ public sealed class TimetableLayout
 {
     // ---------------------------------------------------------------- geometria strony A5
     public const double PageW = 419.53, PageH = 595.28;
-    private const double ML = 30, MR = 26, MT = 26, MB = 22;
+    private const double ML = 28.25, MR = 26;
 
     // szerokości kolumn (proporcje zmierzone na wzorze karty)
-    private const double WNr = 20.5, WKm = 36.5, WVp = 20.5, WVl = 19.5, WSt = 136.5, WGap = 3.0,
+    private const double WNr = 19.75, WKm = 36, WVp = 20, WVl = 20, WSt = 136.5, WGap = 3.0,
         WTime = 34.5, WTravel = 16, WLok = 29.5, WObc = 25.5, WVmax = 21.5;
 
-    private const double HeaderBaseline = MT + 8;
-    private const double TableTop = MT + 12.5;
-    private const double ColHeadH = 25;
+    // strona szczegółowa: nagłówek na wysokości górnej krawędzi ramki strony tytułowej (jak w kartach SKRJ)
+    private const double HeaderBaseline = 40;
+    private const double TableTop = 45.5;
+    private const double ColHeadH = 26;
+
+    // ramka strony tytułowej
+    private const double TitleX0 = 30, TitleX1 = 386.5, TitleY0 = 30.5, TitleY1 = 560.5;
     private const double BodyTop = TableTop + ColHeadH;
 
     // wiersze kolumny 5
@@ -59,9 +63,10 @@ public sealed class TimetableLayout
     private static readonly FontSpec FName = new(10), FNameB = new(10, true), FItal = new(10, false, true);
     private static readonly FontSpec FTime = new(10), FTimeB = new(10, true), FTravel = new(8);
     private static readonly FontSpec FBox = new(8, true), FLeftKm = new(8), FLeftKmB = new(8, true);
-    private static readonly FontSpec FSpeed = new(9), FSpeedB = new(9, true), FLineNr = new(7.5);
+    private static readonly FontSpec FSpeed = new(9), FSpeedB = new(9, true), FLineNr = new(8);
     private static readonly FontSpec FSmall = new(6.5), FLoad = new(9), FHead = new(9, true), FHeadNr = new(9.5, true);
-    private static readonly FontSpec FCol = new(9), FColSmall = new(6), FFoot = new(9), FFootB = new(9.5, true);
+    private static readonly FontSpec FNrHead = new(7);
+    private static readonly FontSpec FCol = new(10), FColSmall = new(6), FFoot = new(9), FFootB = new(9.5, true);
 
     // x kolumn
     private readonly double xNr, xKm, xVp, xVl, xSt, xGap, xTime, xTravel, xLok, xObc, xVmax, xEnd;
@@ -156,9 +161,10 @@ public sealed class TimetableLayout
     {
         var page = new PageDrawing { Width = PageW, Height = PageH, Number = 1 };
         var c = new Canvas(page, _m);
-        double x0 = ML, x1 = xEnd, y0 = 38, y1 = PageH - 40;
+        // geometria zmierzona na rzeczywistej karcie SKRJ (A5): ramka 30–386,5 × 30,5–560,5 pt
+        double x0 = TitleX0, x1 = TitleX1, y0 = TitleY0, y1 = TitleY1;
         double h = y1 - y0, w = x1 - x0, cx = (x0 + x1) / 2;
-        double s1 = y0 + h * 0.16, s2 = y0 + h * 0.78;
+        double s1 = y0 + h * 0.161, s2 = y0 + h * 0.778;
 
         // ramka
         const double bw = 1.6;
@@ -166,54 +172,56 @@ public sealed class TimetableLayout
         c.Fill(x0 - bw / 2, y0 - bw / 2, bw, h + bw); c.Fill(x1 - bw / 2, y0 - bw / 2, bw, h + bw);
         c.HLine(x0, x1, s1, 1.1); c.HLine(x0, x1, s2, 1.1);
 
-        // nagłówek – wydawca
-        var fIss = new FontSpec(9.5, true);
+        // nagłówek – wydawca (11 pt, pogrubiona)
+        var fIss = new FontSpec(11, true);
+        const double issLh = 15.9;
         var iss = Lines(_t.Issuer).ToList();
-        var ib = (y0 + s1) / 2 - (iss.Count - 1) * 14.5 / 2 + 3.3;
-        foreach (var l in iss) { c.Text(cx, ib, l, FitFont(c, l, fIss, w - 16), Align.Center); ib += 14.5; }
+        var ib = (y0 + s1) / 2 - (iss.Count - 1) * issLh / 2 + 7.5;
+        foreach (var l in iss) { c.Text(cx, ib, l, FitFont(c, l, fIss, w - 16), Align.Center); ib += issLh; }
 
         // część środkowa
         var mh = s2 - s1;
         double Y(double frac) => s1 + mh * frac;
         var fTitle = new FontSpec(13, true);
-        var fMid = new FontSpec(10, true);
-        var fGen = new FontSpec(10.5, true);
+        var fMid = new FontSpec(11, true);
+        var fGen = new FontSpec(12, true);
+        const double titleLh = 20.4;
         var kind = (_t.TimetableKind ?? "").Trim();
         var titleLines = c.Wrap(kind.ToUpper(_pl), fTitle, w - 24);
-        var ty = Y(0.12);
-        foreach (var l in titleLines) { c.Text(cx, ty, l, fTitle, Align.Center); ty += 18; }
-        c.Text(cx, ty + 1, $"POCIĄGU NR {_t.TrainNumber}".TrimEnd(), fTitle, Align.Center);
+        var ty = Y(0.1346);
+        foreach (var l in titleLines) { c.Text(cx, ty, l, fTitle, Align.Center); ty += titleLh; }
+        c.Text(cx, ty, $"POCIĄGU NR {_t.TrainNumber}".TrimEnd(), fTitle, Align.Center);
 
         if (!string.IsNullOrWhiteSpace(_t.Carrier))
-            c.Text(cx, Y(0.38), _t.Carrier.Trim(), FitFont(c, _t.Carrier.Trim(), fMid, w - 16), Align.Center);
+            c.Text(cx, Y(0.388), _t.Carrier.Trim(), FitFont(c, _t.Carrier.Trim(), fMid, w - 16), Align.Center);
         if (!string.IsNullOrWhiteSpace(_t.ApplicationNumber) || !string.IsNullOrWhiteSpace(_t.ApplicationDate))
         {
             var s = "na wniosek nr " + _t.ApplicationNumber.Trim();
             if (!string.IsNullOrWhiteSpace(_t.ApplicationDate)) s += " z dnia " + _t.ApplicationDate.Trim();
-            c.Text(cx, Y(0.48), s, FitFont(c, s, fMid, w - 16), Align.Center);
+            c.Text(cx, Y(0.500), s, FitFont(c, s, fMid, w - 16), Align.Center);
         }
         if (!string.IsNullOrWhiteSpace(_t.OrderNumber) || !string.IsNullOrWhiteSpace(_t.OrderDate))
         {
             var s = "zarządzenie " + _t.OrderNumber.Trim();
             if (!string.IsNullOrWhiteSpace(_t.OrderDate)) s += " z dnia " + _t.OrderDate.Trim();
-            c.Text(cx, Y(0.58), s, FitFont(c, s, fMid, w - 16), Align.Center);
+            c.Text(cx, Y(0.594), s, FitFont(c, s, fMid, w - 16), Align.Center);
         }
 
         string gd, gt;
         if (_t.UseCurrentGenerationTime || string.IsNullOrWhiteSpace(_t.GenerationDate))
         { gd = now.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture); gt = now.ToString("HH:mm:ss", CultureInfo.InvariantCulture); }
         else { gd = _t.GenerationDate.Trim(); gt = string.IsNullOrWhiteSpace(_t.GenerationTime) ? "" : _t.GenerationTime.Trim(); }
-        c.Text(cx, Y(0.76), "wygenerowano w systemie", fGen, Align.Center);
-        c.Text(cx, Y(0.83), string.IsNullOrWhiteSpace(_t.SystemName) ? "SKSRJ" : _t.SystemName.Trim(), fGen, Align.Center);
+        c.Text(cx, Y(0.780), "wygenerowano w systemie", fGen, Align.Center);
+        c.Text(cx, Y(0.841), string.IsNullOrWhiteSpace(_t.SystemName) ? "SKSRJ" : _t.SystemName.Trim(), fGen, Align.Center);
         var genLine = $"w dniu {gd} r." + (gt.Length > 0 ? $" o godz. {gt}" : "");
-        c.Text(cx, Y(0.90), genLine, fGen, Align.Center);
+        c.Text(cx, Y(0.902), genLine, FitFont(c, genLine, fGen, w - 16), Align.Center);
 
-        // stopka – informacja dla maszynisty
-        var fMsg = new FontSpec(8.5, true);
+        // stopka – informacja dla maszynisty (10 pt, pogrubiona)
+        var fMsg = new FontSpec(10, true);
         var msg = new List<string>();
         foreach (var l in Lines(_t.DriverMessage)) msg.AddRange(c.Wrap(l, fMsg, w - 14));
-        const double msgLh = 10.6;
-        var my = (s2 + y1) / 2 - (msg.Count - 1) * msgLh / 2 + 2.8;
+        const double msgLh = 11.5;
+        var my = (s2 + y1) / 2 - (msg.Count - 1) * msgLh / 2 + 2.7;
         for (var i = 0; i < msg.Count; i++)
         {
             c.Text(cx, my, msg[i], fMsg, Align.Center, underline: _t.UnderlineLastMessageLine && i == msg.Count - 1);
@@ -618,9 +626,13 @@ public sealed class TimetableLayout
     private void Paginate()
     {
         var mc = new Canvas(new PageDrawing(), _m);
-        var avail = PageH - MB - BodyTop - (_print.SimulationNote ? 8 : 0);
+        // tabela razem z odnośnikami (i na ostatniej stronie – „Kursuje:” i uwagami) kończy się najniżej
+        // na wysokości dolnej krawędzi ramki strony tytułowej; gdy są odnośniki, tabela jest odpowiednio wyżej
+        var availTotal = TitleY1 - BodyTop;
+        var availTable = TitleY1 - BodyTop;
         var n = _rows.Count;
-        var start = 0; var pageNo = 2;
+        var ranges = new List<(int a, int b)>();
+        var start = 0;
         while (start < n)
         {
             var endRow = start;
@@ -628,11 +640,35 @@ public sealed class TimetableLayout
             {
                 var h = _rows[k].Bottom - _rows[start].Top;
                 var f = FootHeight(start, k, k == n - 1, mc);
-                if (k == start || h + f <= avail) endRow = k; else break;
+                if (k == start || (h <= availTable + 0.01 && h + f <= availTotal)) endRow = k; else break;
             }
-            _result.Pages.Add(DrawTimetablePage(start, endRow, pageNo++, endRow == n - 1));
+            ranges.Add((start, endRow));
             start = endRow + 1;
         }
+
+        // strony poza ostatnią: tabela dociągnięta do dołu (wyrównana z ramką strony tytułowej) –
+        // nadwyżka rozdzielana na wiersze, których wysokość nie wynika ze zmian prędkości
+        for (var iter = 0; iter < 6; iter++)
+        {
+            var changed = false;
+            foreach (var (a, b) in ranges)
+            {
+                if (b == n - 1) continue;
+                var target = Math.Min(availTable, availTotal - FootHeight(a, b, false, mc));
+                var extra = target - (_rows[b].Bottom - _rows[a].Top);
+                if (extra < 0.05) continue;
+                var free = Enumerable.Range(a, b - a + 1).Where(i => _rows[i].Bottom - _rows[i].Top <= _rows[i].H + 0.01).ToList();
+                if (free.Count == 0) free = Enumerable.Range(a, b - a + 1).ToList();
+                foreach (var i in free) _rows[i].H += extra / free.Count;
+                changed = true;
+            }
+            if (!changed) break;
+            SolveVertical();
+        }
+
+        var pageNo = 2;
+        foreach (var (a, b) in ranges)
+            _result.Pages.Add(DrawTimetablePage(a, b, pageNo++, b == n - 1));
     }
 
     // ================================================================= rysowanie strony rozkładu
@@ -716,8 +752,8 @@ public sealed class TimetableLayout
     private void DrawColumnHeader(Canvas c)
     {
         double t = TableTop, b = BodyTop, mid = (t + b) / 2;
-        c.Text((xNr + xKm) / 2, t + 10.5, "Nr", FColSmall, Align.Center);
-        c.Text((xNr + xKm) / 2, t + 17.5, "linii", FColSmall, Align.Center);
+        c.Text((xNr + xKm) / 2, t + 10.8, "Nr", FNrHead, Align.Center);
+        c.Text((xNr + xKm) / 2, t + 18.6, "linii", FNrHead, Align.Center);
         c.Text((xKm + xVp) / 2, mid + 3.2, "Km", FCol, Align.Center);
         DrawVHeader(c, (xVp + xVl) / 2, mid + 3.2, "P");
         DrawVHeader(c, (xVl + xSt) / 2, mid + 3.2, "L");

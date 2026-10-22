@@ -51,7 +51,7 @@ The user interface and the generated cards are in Polish, as in the original ins
 - **“Wykaz ostrzeżeń na trasie pociągu”** page (speed restrictions on the train's route) with the time
   lost on each restriction.
 - Page breaks that keep line sections continuous; **A5** sheets or **A4 landscape – 2×A5**.
-- Embedded Liberation Serif font (metric-compatible with Times New Roman).
+- Times New Roman, as on SKRJ cards, taken from the system when installed (embedded as a subset in the PDF); otherwise the bundled Liberation Serif, which is metric-compatible, so the layout is identical.
 
 ![Title page and page 2 of a card](docs/img/karta.png)
 
@@ -68,6 +68,7 @@ The user interface and the generated cards are in Polish, as in the original ins
   turnouts): either written into card columns 3–4 or added as an entry in the list of permanent restrictions.
 - **Dark mode for the schematic** – toggle on the toolbar (PDF export stays light).
 - **Automatic kilometrage** of a line from the drawing length, export of the schematic to PDF (A3) with a legend.
+- **Standalone schematic files** (`*.sksrjs`) – export the schematic and import it into another project (a schematic can also be imported from a `*.sksrj` project).
 
 ### Train route from the schematic
 
@@ -140,9 +141,9 @@ The same works with `-r linux-x64` or `-r osx-arm64`.
 | Section | Contents |
 |---|---|
 | **Schemat** (schematic) | scenery map, drawing tools, inspector, laying out the train route |
-| **Pociąg** (train) | train category and number, relation, header, title page, order signature, footer |
+| **Pociąg** (train) | train category and number, relation, header, title page, order signature, footer; a **bank** of issuer headers and railway undertakings saved for reuse |
 | **Trasa** (route) | line sections (columns 1–4): km, V<sub>P</sub>/V<sub>L</sub> speeds, right/left track |
-| **Posterunki** (posts) | posts (columns 5–9): name, km, abbreviations, italics, times, running times, train number, consist |
+| **Posterunki** (posts) | posts (columns 5–9): name, km, abbreviations, italics, times, running times, train number, consist; batch setting of commercial stop times for halts, stations and junction stations (select all / none) |
 | **Czasy jazdy** (running times) | traction profile, reserves, v(s) chart, A/B/C/D results, writing times into the card |
 | **Ostrzeżenia** (restrictions) | permanent and temporary restrictions, generator, restrictions on the train's route |
 | **Uwagi** (remarks) | “Kursuje:”, footnotes, timetable remarks |

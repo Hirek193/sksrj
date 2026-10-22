@@ -56,6 +56,7 @@
           <ToggleSwitch IsChecked="{Binding Project.Print.SimulationNote}" OnContent="Drukuj dopisek w stopce każdej strony" OffContent="Bez dopisku (wygląd 1:1 z instrukcją)" />
           <TextBox Text="{Binding Project.Print.SimulationNoteText}" IsEnabled="{Binding Project.Print.SimulationNote}" />
           <ToggleSwitch IsChecked="{Binding Project.Print.IncludeRestrictionList}" OnContent="Dołączaj stronę „Wykaz ostrzeżeń na trasie pociągu”" OffContent="Bez wykazu ostrzeżeń" />
+          <TextBlock Classes="body-small" TextWrapping="Wrap" Text="{Binding CardFontText}" />
           <ToggleSwitch IsChecked="{Binding Project.Print.ShadeStopTimes}" OnContent="Szare tło godzin postojów handlowych (ph)" OffContent="Godziny postojów handlowych bez wyróżnienia tłem" />
         </StackPanel>
       </Border>

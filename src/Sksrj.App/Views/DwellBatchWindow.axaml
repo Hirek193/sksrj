@@ -1,0 +1,108 @@
+<!--
+  SKSRJ Timetable generator
+  Copyright (C) 2026 Oskar Jagodziński
+
+  This program is free software: you can redistribute it and/or modify it under the terms of
+  the GNU General Public License as published by the Free Software Foundation, either version 3
+  of the License, or (at your option) any later version, together with the additional terms
+  under Section 7 of that License (see the files LICENSE and ADDITIONAL_TERMS).
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+  Based on SKSRJ Timetable generator originally created by Oskar Jagodziński.
+  Original source: https://github.com/Hirek193/sksrj
+-->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Sksrj.App.ViewModels"
+        xmlns:mi="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        x:Class="Sksrj.App.Views.DwellBatchWindow"
+        x:DataType="vm:DwellBatchViewModel"
+        Width="640" Height="640" MinWidth="520" MinHeight="420" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource Md.SurfaceContainerHigh}" Title="Czasy postojów handlowych – SKSRJ Timetable generator">
+  <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="24,20,24,20">
+    <StackPanel Spacing="4">
+      <TextBlock Classes="headline" FontSize="22" Text="Czasy postojów handlowych" />
+      <TextBlock Classes="body-small" Text="{Binding TrainText}" />
+    </StackPanel>
+
+    <!-- czasy wg rodzaju posterunku -->
+    <Border Grid.Row="1" Classes="card" Margin="0,14,0,0" Background="{DynamicResource Md.Surface}">
+      <StackPanel Spacing="10">
+        <Grid ColumnDefinitions="*,12,*,12,*">
+          <HeaderedContentControl Classes="field" Header="Przystanki osobowe [min]">
+            <TextBox Text="{Binding Halt}" Watermark="min. § 22 (np. 0.5)" />
+          </HeaderedContentControl>
+          <HeaderedContentControl Grid.Column="2" Classes="field" Header="Stacje [min]">
+            <TextBox Text="{Binding Station}" Watermark="min. § 22 (np. 1)" />
+          </HeaderedContentControl>
+          <HeaderedContentControl Grid.Column="4" Classes="field" Header="Stacje węzłowe [min]">
+            <TextBox Text="{Binding Junction}" Watermark="min. § 22 (np. 2)" />
+          </HeaderedContentControl>
+        </Grid>
+        <TextBlock Classes="body-small" TextWrapping="Wrap"
+                   Text="Puste pole = minimalny czas postoju wg Ir-11 § 22 ust. 11 (zależny od rodzaju pociągu). Wartości zapamiętywane są w karcie i używane także przy ponownym układaniu trasy ze schematu. Po zastosowaniu każdy postój można dalej skrócić lub wydłużyć ręcznie w zakładce Posterunki." />
+      </StackPanel>
+    </Border>
+
+    <!-- zaznaczanie -->
+    <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" Margin="0,14,0,6">
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <Button Classes="small" Command="{Binding SelectAllCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="CheckboxMultipleMarkedOutline" /><TextBlock Text="Zaznacz wszystkie" /></StackPanel>
+        </Button>
+        <Button Classes="small" Command="{Binding SelectNoneCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="CheckboxMultipleBlankOutline" /><TextBlock Text="Odznacz wszystkie" /></StackPanel>
+        </Button>
+        <Button Classes="small" ToolTip.Tip="Zaznacz według rodzaju">
+          <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="FilterVariant" /><TextBlock Text="Tylko…" /></StackPanel>
+          <Button.Flyout>
+            <MenuFlyout>
+              <MenuItem Header="przystanki osobowe" Command="{Binding SelectCategoryCommand}" CommandParameter="Halt" />
+              <MenuItem Header="stacje" Command="{Binding SelectCategoryCommand}" CommandParameter="Station" />
+              <MenuItem Header="stacje węzłowe" Command="{Binding SelectCategoryCommand}" CommandParameter="Junction" />
+            </MenuFlyout>
+          </Button.Flyout>
+        </Button>
+      </StackPanel>
+      <TextBlock Grid.Column="2" Classes="label" VerticalAlignment="Center" Text="{Binding SelectionText}" />
+    </Grid>
+
+    <!-- lista postojów -->
+    <Border Grid.Row="3" Classes="card" Padding="4" Background="{DynamicResource Md.Surface}">
+      <Panel>
+        <TextBlock IsVisible="{Binding !HasRows}" Margin="16" TextWrapping="Wrap" Classes="body-small"
+                   Text="Ta karta nie ma postojów pośrednich. Zaznacz postoje w zakładce Posterunki albo wybierz zasadę postojów przy układaniu trasy na schemacie." />
+        <ScrollViewer IsVisible="{Binding HasRows}">
+          <ItemsControl ItemsSource="{Binding Rows}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:DwellRow">
+                <Grid ColumnDefinitions="Auto,36,*,140,90" Margin="8,2">
+                  <CheckBox IsChecked="{Binding Selected}" MinWidth="0" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Text="{Binding Number}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
+                  <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Name}" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding StopKinds}" FontSize="11" Classes="muted" />
+                  </StackPanel>
+                  <TextBlock Grid.Column="3" Text="{Binding CategoryText}" FontSize="12" Classes="muted" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="4" Text="{Binding CurrentDwell}" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Panel>
+    </Border>
+
+    <Grid Grid.Row="4" ColumnDefinitions="*,Auto" Margin="0,16,0,0">
+      <TextBlock Text="{Binding Error}" Foreground="{DynamicResource Md.Error}" TextWrapping="Wrap" VerticalAlignment="Center" FontSize="12" />
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+        <Button Content="Anuluj" Click="OnCancel" />
+        <Button Classes="filled" Click="OnOk">
+          <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="CheckBold" /><TextBlock Text="Ustaw dla zaznaczonych" /></StackPanel>
+        </Button>
+      </StackPanel>
+    </Grid>
+  </Grid>
+</Window>

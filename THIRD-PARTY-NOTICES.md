@@ -26,6 +26,14 @@ Copyright © 2012 Red Hat, Inc. with Reserved Font Name Liberation.
 Czcionki nie są objęte licencją GPL – obowiązuje je wyłącznie licencja OFL.
 Dokumenty PDF utworzone programem (z osadzonymi czcionkami) nie podlegają licencji OFL ani GPL.
 
+## Times New Roman
+
+Jeśli w systemie zainstalowana jest czcionka **Times New Roman** (np. w Windows), program używa jej
+w kartach rozkładu jazdy, tak jak karty SKRJ, i osadza jej podzbiór w eksportowanym PDF. Czcionka
+**nie jest dołączona do programu** ani do repozytorium – prawa do niej przysługują jej właścicielom
+(The Monotype Corporation). Gdy jej brak, używana jest wbudowana Liberation Serif, metrycznie zgodna
+z Times New Roman (układ karty jest wtedy identyczny).
+
 ## Instrukcja Ir-11
 
 Wygląd kart rozkładu jazdy oraz słowniki znaków, skrótów i rodzajów pociągów
