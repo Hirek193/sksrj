@@ -48,7 +48,7 @@ z trasami rzeczywistymi i **fikcyjnymi**.
   **odnośniki** \*1), \*2) na stronie, na której występują, **„Kursuje:”** i **„Uwagi do rozkładu”**.
 - Strona **„Wykaz ostrzeżeń na trasie pociągu”** ze stratą czasu na każdym ostrzeżeniu.
 - Łamanie stron z zachowaniem ciągłości odcinków linii; arkusze **A5** lub **A4 poziomo – 2×A5**.
-- Osadzona czcionka Liberation Serif (metrycznie zgodna z Times New Roman).
+- Czcionka Times New Roman, jak w kartach SKRJ – z systemu, gdy jest zainstalowana (podzbiór osadzany w PDF); w przeciwnym razie wbudowana Liberation Serif, metrycznie zgodna, więc układ karty jest identyczny.
 
 ![Strona tytułowa i strona 2 karty](docs/img/karta.png)
 
@@ -66,6 +66,7 @@ z trasami rzeczywistymi i **fikcyjnymi**.
   głowicy, rozjazdy): wpisywane do kolumn 3–4 karty albo jako pozycja wykazu ostrzeżeń stałych.
 - **Tryb ciemny schematu** – przełącznik na pasku narzędzi (eksport PDF pozostaje jasny).
 - **Auto-kilometraż** linii według długości rysunku, eksport schematu do PDF (A3) z legendą.
+- **Schemat jako osobny plik** (`*.sksrjs`) – eksport schematu i import do innego projektu (import działa też z projektu `*.sksrj`).
 
 ### Trasa pociągu ze schematu
 
@@ -138,9 +139,9 @@ Analogicznie dla `-r linux-x64` lub `-r osx-arm64`.
 | Sekcja | Zawartość |
 |---|---|
 | **Schemat** | plan scenerii, narzędzia rysowania, inspektor, układanie trasy pociągu |
-| **Pociąg** | rodzaj i numer pociągu, relacja, nagłówek, strona tytułowa, sygnatura zarządzenia, stopka |
+| **Pociąg** | rodzaj i numer pociągu, relacja, nagłówek, strona tytułowa, sygnatura zarządzenia, stopka; **bank** nagłówków wydawców i przewoźników do ponownego użycia |
 | **Trasa** | odcinki linii (kolumny 1–4): km, prędkości V<sub>P</sub>/V<sub>L</sub>, tor prawy/lewy |
-| **Posterunki** | posterunki (kolumny 5–9): nazwa, km, skróty, kursywy, godziny, czasy jazdy, numer pociągu, skład |
+| **Posterunki** | posterunki (kolumny 5–9): nazwa, km, skróty, kursywy, godziny, czasy jazdy, numer pociągu, skład; zbiorcze ustawianie czasów postojów handlowych dla przystanków, stacji i stacji węzłowych (zaznacz / odznacz wszystkie) |
 | **Czasy jazdy** | profil trakcyjny, rezerwy, wykres v(s), wyniki A/B/C/D, wpisanie czasów do karty |
 | **Ostrzeżenia** | wykaz stałych i doraźnych, generator, ostrzeżenia na trasie pociągu |
 | **Uwagi** | „Kursuje:”, odnośniki, uwagi do rozkładu |

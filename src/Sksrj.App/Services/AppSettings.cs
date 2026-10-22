@@ -21,6 +21,32 @@ public sealed class AppSettings
 {
     public bool IsDark { get; set; }
     public bool SchemeDark { get; set; }
+    /// <summary>Bank nagłówków wydawcy (wiersze rozdzielone znakiem nowej linii); null – jeszcze nie utworzony.</summary>
+    public List<string>? Issuers { get; set; }
+    /// <summary>Bank przewoźników; null – jeszcze nie utworzony.</summary>
+    public List<string>? Carriers { get; set; }
+
+    public static readonly string[] DefaultIssuers =
+    {
+        "FLK Fikcyjne Linie Kolejowe S.F.",
+        "PKP POLSKIE LINIE KOLEJOWE S.A.\nCENTRUM ZARZĄDZANIA RUCHEM KOLEJOWYM\nW WARSZAWIE",
+    };
+
+    public static readonly string[] DefaultCarriers =
+    {
+        "Koleje Fikcyjne Spółka z o.o.",
+        "PKP INTERCITY Spółka Akcyjna",
+        "POLREGIO S.A.",
+        "Koleje Mazowieckie – KM sp. z o.o.",
+        "Koleje Śląskie sp. z o.o.",
+        "Koleje Dolnośląskie S.A.",
+        "Koleje Wielkopolskie sp. z o.o.",
+        "Łódzka Kolej Aglomeracyjna sp. z o.o.",
+        "PKP Szybka Kolej Miejska w Trójmieście sp. z o.o.",
+        "Arriva RP sp. z o.o.",
+        "PKP CARGO S.A.",
+        "DB Cargo Polska S.A.",
+    };
 
     private static string FilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SKSRJ", "settings.json");
 

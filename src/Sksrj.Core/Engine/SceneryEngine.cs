@@ -277,7 +277,10 @@ public static class SceneryRouter
     {
         p.Stop = stop;
         p.StopKinds = stop && node.Passenger && RunTimeCalculator.IsPassenger(t.TrainCategory) ? node.DefaultStopKinds : "";
-        p.Dwell = stop && !first && !last ? (node.DefaultDwell ?? "").Trim() : "";
+        // czas postoju: z posterunku schematu, a gdy brak – domyślny karty dla rodzaju posterunku
+        var dw = (node.DefaultDwell ?? "").Trim();
+        if (dw.Length == 0) dw = TimetableTools.DefaultDwell(t, TimetableTools.CategoryOf(p));
+        p.Dwell = stop && !first && !last ? dw : "";
         if (!stop) p.Arrival = "";
     }
 

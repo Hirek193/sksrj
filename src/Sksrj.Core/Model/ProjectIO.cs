@@ -44,6 +44,36 @@ public static class ProjectSerializer
 
     public static TimetableProject Load(string path) => Deserialize(File.ReadAllText(path));
 
+    // ---------------------------------------------------------------- schemat scenerii jako osobny plik
+    public const string SceneryExtension = ".sksrjs";
+    public const string SceneryFormat = "sksrj-scenery";
+
+    private sealed class SceneryFile
+    {
+        public string Format { get; set; } = SceneryFormat;
+        public int Version { get; set; } = 1;
+        public string Generator { get; set; } = AppInfo.Name + " " + AppInfo.Version;
+        public Scenery? Scenery { get; set; }
+    }
+
+    /// <summary>Zapisuje sam schemat scenerii (linie, posterunki, odcinki, ograniczenia posterunków).</summary>
+    public static void SaveScenery(Scenery sc, string path) =>
+        File.WriteAllText(path, JsonSerializer.Serialize(new SceneryFile { Scenery = sc }, Options));
+
+    /// <summary>Wczytuje schemat z pliku schematu (*.sksrjs), z projektu (*.sksrj) albo z samego obiektu schematu w JSON.</summary>
+    public static Scenery LoadScenery(string path)
+    {
+        var json = File.ReadAllText(path);
+        using var doc = JsonDocument.Parse(json, new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true });
+        var root = doc.RootElement;
+        if (root.ValueKind != JsonValueKind.Object) throw new InvalidDataException("Plik nie zawiera schematu scenerii.");
+        bool Has(string n) => root.EnumerateObject().Any(p => p.Name.Equals(n, StringComparison.OrdinalIgnoreCase));
+        if (Has("Timetables")) return Deserialize(json).Scenery;
+        if (Has("Scenery")) return JsonSerializer.Deserialize<SceneryFile>(json, Options)?.Scenery ?? throw new InvalidDataException("Plik nie zawiera schematu scenerii.");
+        if (Has("Nodes")) return JsonSerializer.Deserialize<Scenery>(json, Options) ?? new Scenery();
+        throw new InvalidDataException("Plik nie zawiera schematu scenerii.");
+    }
+
     public static T Clone<T>(T obj) => JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(obj, Options), Options)!;
 }
 

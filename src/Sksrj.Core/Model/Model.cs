@@ -105,6 +105,12 @@ public partial class Timetable : ObservableObject
     [ObservableProperty] private bool _capSpeedsToVmax = true;
     /// <summary>Przystanki osobowe („po”), na których pociąg nie ma postoju, nie są drukowane w karcie.</summary>
     [ObservableProperty] private bool _hidePassedHalts = true;
+    /// <summary>Czas postoju handlowego [min] na przystankach osobowych (puste = minimum wg Ir-11 § 22 ust. 11).</summary>
+    [ObservableProperty] private string _dwellHalt = "";
+    /// <summary>Czas postoju handlowego [min] na stacjach.</summary>
+    [ObservableProperty] private string _dwellStation = "";
+    /// <summary>Czas postoju handlowego [min] na stacjach węzłowych (nazwa wersalikami).</summary>
+    [ObservableProperty] private string _dwellJunction = "";
 
     public ObservableCollection<Footnote> Footnotes { get; set; } = new();
     public ObservableCollection<LineSection> Sections { get; set; } = new();

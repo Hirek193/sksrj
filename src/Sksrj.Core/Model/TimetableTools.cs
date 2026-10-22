@@ -28,6 +28,29 @@ public static class TimetableTools
         return !p.Stop && string.Equals((p.TypeSuffix ?? "").Trim().TrimEnd('.'), "po", StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Rodzaj posterunku dla domyślnych czasów postoju.</summary>
+    public enum StopCategory { Halt, Station, Junction }
+
+    public static StopCategory CategoryOf(RoutePoint p) =>
+        p.Uppercase ? StopCategory.Junction
+        : string.Equals((p.TypeSuffix ?? "").Trim().TrimEnd('.'), "po", StringComparison.OrdinalIgnoreCase) ? StopCategory.Halt
+        : StopCategory.Station;
+
+    public static string CategoryText(StopCategory c) => c switch
+    {
+        StopCategory.Halt => "przystanek osobowy",
+        StopCategory.Junction => "stacja węzłowa",
+        _ => "stacja",
+    };
+
+    /// <summary>Domyślny czas postoju karty dla rodzaju posterunku (puste = minimum wg § 22 ust. 11).</summary>
+    public static string DefaultDwell(Timetable t, StopCategory c) => (c switch
+    {
+        StopCategory.Halt => t.DwellHalt,
+        StopCategory.Junction => t.DwellJunction,
+        _ => t.DwellStation,
+    } ?? "").Trim();
+
     /// <summary>Aktualizuje znacznik <see cref="RoutePoint.HiddenInCard"/> wszystkich posterunków karty.</summary>
     public static void UpdateHiddenFlags(Timetable t)
     {

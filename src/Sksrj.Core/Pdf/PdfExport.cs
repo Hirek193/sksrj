@@ -20,12 +20,56 @@ using Sksrj.Core.Model;
 
 namespace Sksrj.Core.Pdf;
 
-/// <summary>Czcionka szeryfowa wbudowana w program (Liberation Serif – metrycznie zgodna z Times New Roman, licencja SIL OFL).</summary>
+/// <summary>
+/// Czcionki karty: Times New Roman z systemu (jak w kartach SKRJ), a gdy jej brak – wbudowana Liberation Serif
+/// (metrycznie zgodna z Times New Roman, licencja SIL OFL), więc skład karty jest w obu przypadkach identyczny.
+/// Czcionka Times New Roman nie jest rozpowszechniana z programem – jest tylko osadzana (podzbiór) w eksportowanym PDF.
+/// </summary>
 public sealed class EmbeddedFontResolver : IFontResolver
 {
-    public const string Family = "Liberation Serif";
+    public const string LiberationFamily = "Liberation Serif";
+    public const string TimesFamily = "Times New Roman";
     private static readonly object Lock = new();
     private static bool _installed;
+
+    /// <summary>Pliki Times New Roman w systemie: regular, bold, italic, bold italic (null – brak).</summary>
+    private static readonly string?[] TimesFiles = FindTimes();
+
+    /// <summary>Czy w systemie jest Times New Roman (co najmniej odmiana zwykła i pogrubiona).</summary>
+    public static bool SystemTimesAvailable => TimesFiles[0] != null && TimesFiles[1] != null;
+
+    /// <summary>Rodzina czcionki szeryfowej używana w karcie.</summary>
+    public static string Family => SystemTimesAvailable ? TimesFamily : LiberationFamily;
+
+    public static string FontDescription => SystemTimesAvailable
+        ? "Times New Roman (czcionka systemowa)"
+        : "Liberation Serif (wbudowana – metrycznie zgodna z Times New Roman; w systemie brak Times New Roman)";
+
+    private static string?[] FindTimes()
+    {
+        var dirs = new List<string>();
+        var env = Environment.GetEnvironmentVariable("SKSRJ_FONT_DIR");
+        if (!string.IsNullOrWhiteSpace(env)) dirs.Add(env);
+        try { dirs.Add(Environment.GetFolderPath(Environment.SpecialFolder.Fonts)); } catch { }
+        try { dirs.Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "Windows", "Fonts")); } catch { }
+        dirs.AddRange(new[] { "/usr/share/fonts/truetype/msttcorefonts", "/usr/share/fonts/TTF", "/usr/share/fonts/truetype",
+            "/Library/Fonts", "/System/Library/Fonts/Supplemental", "/System/Library/Fonts" });
+        string[][] names =
+        {
+            new[] { "times.ttf", "Times_New_Roman.ttf", "Times New Roman.ttf", "TimesNewRoman.ttf" },
+            new[] { "timesbd.ttf", "Times_New_Roman_Bold.ttf", "Times New Roman Bold.ttf", "TimesNewRomanBold.ttf" },
+            new[] { "timesi.ttf", "Times_New_Roman_Italic.ttf", "Times New Roman Italic.ttf", "TimesNewRomanItalic.ttf" },
+            new[] { "timesbi.ttf", "Times_New_Roman_Bold_Italic.ttf", "Times New Roman Bold Italic.ttf", "TimesNewRomanBoldItalic.ttf" },
+        };
+        var res = new string?[4];
+        for (var k = 0; k < 4; k++)
+            foreach (var d in dirs.Where(x => !string.IsNullOrWhiteSpace(x)))
+            {
+                var hit = names[k].Select(n => Path.Combine(d, n)).FirstOrDefault(File.Exists);
+                if (hit != null) { res[k] = hit; break; }
+            }
+        return res;
+    }
 
     public static void Install()
     {
@@ -43,6 +87,9 @@ public sealed class EmbeddedFontResolver : IFontResolver
     {
         if (familyName.Equals(SansFamily, StringComparison.OrdinalIgnoreCase))
             return new FontResolverInfo(bold ? "LiberationSans-Bold" : "LiberationSans-Regular");
+        var idx = (bold ? 1 : 0) + (italic ? 2 : 0);
+        if (familyName.Equals(TimesFamily, StringComparison.OrdinalIgnoreCase) && TimesFiles[idx] != null)
+            return new FontResolverInfo("TNR-" + idx);
         var face = (bold, italic) switch
         {
             (true, true) => "LiberationSerif-BoldItalic",
@@ -53,7 +100,12 @@ public sealed class EmbeddedFontResolver : IFontResolver
         return new FontResolverInfo(face);
     }
 
-    public byte[]? GetFont(string faceName) => LoadFontBytes(faceName);
+    public byte[]? GetFont(string faceName)
+    {
+        if (faceName.StartsWith("TNR-", StringComparison.Ordinal) && int.TryParse(faceName[4..], out var i) && TimesFiles[i] is { } path)
+            return File.ReadAllBytes(path);
+        return LoadFontBytes(faceName);
+    }
 
     public static byte[] LoadFontBytes(string faceName)
     {

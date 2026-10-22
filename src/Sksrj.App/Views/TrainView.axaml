@@ -80,9 +80,43 @@
             <mi:MaterialIcon Kind="FileDocumentOutline" Width="22" Height="22" Foreground="{DynamicResource Md.Primary}" />
             <TextBlock Classes="title-medium" Text="Strona tytułowa" VerticalAlignment="Center" />
           </StackPanel>
-          <HeaderedContentControl Classes="field" Header="Wydawca – nagłówek karty (każdy wiersz w nowej linii)">
-            <TextBox Classes="multiline" Text="{Binding SelectedTimetable.Issuer}" MinHeight="84" />
-          </HeaderedContentControl>
+          <Grid ColumnDefinitions="*,8,Auto">
+            <HeaderedContentControl Classes="field" Header="Wydawca – nagłówek karty (każdy wiersz w nowej linii)">
+              <TextBox Classes="multiline" Text="{Binding SelectedTimetable.Issuer}" MinHeight="84" />
+            </HeaderedContentControl>
+            <Button Grid.Column="2" Classes="tonal" VerticalAlignment="Bottom" ToolTip.Tip="Wybierz z banku lub zapisz bieżący">
+              <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="BookmarkMultipleOutline" /><TextBlock Text="Bank" /></StackPanel>
+              <Button.Flyout>
+                <Flyout Placement="BottomEdgeAlignedRight">
+                  <StackPanel Width="430" Spacing="4">
+                    <ScrollViewer MaxHeight="360">
+                      <ItemsControl ItemsSource="{Binding IssuerBank}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="vm:BankEntry">
+                            <Grid ColumnDefinitions="*,Auto">
+                              <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" CornerRadius="0" Padding="16,0"
+                                      Foreground="{DynamicResource Md.OnSurface}" FontWeight="Normal" ToolTip.Tip="{Binding Value}"
+                                      Command="{ReflectionBinding $parent[ItemsControl].DataContext.UseIssuerCommand}" CommandParameter="{Binding}">
+                                <TextBlock Text="{Binding Display}" TextTrimming="CharacterEllipsis" />
+                              </Button>
+                              <Button Grid.Column="1" Classes="icon small" ToolTip.Tip="Usuń z banku"
+                                      Command="{ReflectionBinding $parent[ItemsControl].DataContext.RemoveIssuerCommand}" CommandParameter="{Binding}">
+                                <mi:MaterialIcon Kind="Close" />
+                              </Button>
+                            </Grid>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </ScrollViewer>
+                    <Border Height="1" Background="{DynamicResource Md.OutlineVariant}" Margin="0,4" />
+                    <Button Classes="small" HorizontalAlignment="Left" Margin="8,0,0,4" Command="{Binding SaveIssuerToBankCommand}">
+                      <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="BookmarkPlusOutline" /><TextBlock Text="Zapisz bieżący nagłówek w banku" /></StackPanel>
+                    </Button>
+                  </StackPanel>
+                </Flyout>
+              </Button.Flyout>
+            </Button>
+          </Grid>
           <Grid ColumnDefinitions="*,8,Auto">
             <HeaderedContentControl Classes="field" Header="Rodzaj rozkładu jazdy">
               <TextBox Text="{Binding SelectedTimetable.TimetableKind}" Watermark="np. ROCZNY ROZKŁAD JAZDY" />
@@ -104,9 +138,43 @@
               </Button.Flyout>
             </Button>
           </Grid>
-          <HeaderedContentControl Classes="field" Header="Przewoźnik">
-            <TextBox Text="{Binding SelectedTimetable.Carrier}" Watermark="np. Koleje Fikcyjne Spółka z o.o." />
-          </HeaderedContentControl>
+          <Grid ColumnDefinitions="*,8,Auto">
+            <HeaderedContentControl Classes="field" Header="Przewoźnik">
+              <TextBox Text="{Binding SelectedTimetable.Carrier}" Watermark="np. Koleje Fikcyjne Spółka z o.o." />
+            </HeaderedContentControl>
+            <Button Grid.Column="2" Classes="tonal" VerticalAlignment="Bottom" ToolTip.Tip="Wybierz z banku lub zapisz bieżący">
+              <StackPanel Orientation="Horizontal" Spacing="8"><mi:MaterialIcon Kind="BookmarkMultipleOutline" /><TextBlock Text="Bank" /></StackPanel>
+              <Button.Flyout>
+                <Flyout Placement="BottomEdgeAlignedRight">
+                  <StackPanel Width="430" Spacing="4">
+                    <ScrollViewer MaxHeight="360">
+                      <ItemsControl ItemsSource="{Binding CarrierBank}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="vm:BankEntry">
+                            <Grid ColumnDefinitions="*,Auto">
+                              <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" CornerRadius="0" Padding="16,0"
+                                      Foreground="{DynamicResource Md.OnSurface}" FontWeight="Normal" ToolTip.Tip="{Binding Value}"
+                                      Command="{ReflectionBinding $parent[ItemsControl].DataContext.UseCarrierCommand}" CommandParameter="{Binding}">
+                                <TextBlock Text="{Binding Display}" TextTrimming="CharacterEllipsis" />
+                              </Button>
+                              <Button Grid.Column="1" Classes="icon small" ToolTip.Tip="Usuń z banku"
+                                      Command="{ReflectionBinding $parent[ItemsControl].DataContext.RemoveCarrierCommand}" CommandParameter="{Binding}">
+                                <mi:MaterialIcon Kind="Close" />
+                              </Button>
+                            </Grid>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </ScrollViewer>
+                    <Border Height="1" Background="{DynamicResource Md.OutlineVariant}" Margin="0,4" />
+                    <Button Classes="small" HorizontalAlignment="Left" Margin="8,0,0,4" Command="{Binding SaveCarrierToBankCommand}">
+                      <StackPanel Orientation="Horizontal" Spacing="6"><mi:MaterialIcon Kind="BookmarkPlusOutline" /><TextBlock Text="Zapisz bieżącego przewoźnika w banku" /></StackPanel>
+                    </Button>
+                  </StackPanel>
+                </Flyout>
+              </Button.Flyout>
+            </Button>
+          </Grid>
           <Grid ColumnDefinitions="2*,16,*">
             <HeaderedContentControl Classes="field" Header="Wniosek nr">
               <TextBox Text="{Binding SelectedTimetable.ApplicationNumber}" />
