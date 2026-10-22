@@ -49,8 +49,11 @@ public sealed class TimetableLayout
     private const double LastBase = 3.2;     // od dołu wiersza do linii bazowej ostatniego wiersza
     private const double LeftMinCell = 12.0, LeftLabelH = 9.5;
     private const double NameKmGap = LH / 2;
+    /// <summary>Granica oznaczenia szlaku (kol. 5|6) – tyle poniżej linii bazowej nazwy posterunku.</summary>
+    private const double MarkerBelowName = 3.2;
 
     private const double Thin = 0.5, Frame = 0.75;
+    private static readonly Rgb ShadeColor = new(217, 217, 217);
 
     // czcionki
     private static readonly FontSpec FName = new(10), FNameB = new(10, true), FItal = new(10, false, true);
@@ -341,7 +344,8 @@ public sealed class TimetableLayout
                 var changed = prevLast == null || prevLast.Vp != first.Vp || prevLast.Vl != first.Vl || prevLast.Single != first.Single || prev!.Side != sec.Side;
                 if (changed)
                 {
-                    var trainChanged = prevLast == null || EffTrain(prevLast, prev!.Side) != EffTrain(first, sec.Side) || prev!.Side != sec.Side;
+                    // pogrubienie tylko wtedy, gdy zmienia się prędkość po torze, dla którego opracowano rozkład
+                    var trainChanged = prevLast == null || EffTrain(prevLast, prev!.Side) != EffTrain(first, sec.Side);
                     e.LabelAbove = Num.KmComma(k0);
                     e.AboveBold = first.Bold switch { BoldMode.Yes => true, BoldMode.No => false, _ => trainChanged };
                 }
@@ -840,23 +844,59 @@ public sealed class TimetableLayout
 
     private void DrawLineMarker(Canvas c, int r0, int r1, Func<double, double> Py)
     {
-        // obszar [środek wiersza i, środek wiersza i+1] należy do szlaku i → i+1
+        // obszar szlaku i → i+1: od pierwszego wiersza tekstu (nazwy) posterunku i do pierwszego wiersza
+        // posterunku i+1 – tak jak w kartach SKRJ gruba linia jednotoru kończy się / zaczyna pod nazwą posterunku
         var n = _rows.Count;
-        double Mid(int i) => (_rows[i].Top + _rows[i].Bottom) / 2;
+        double Anchor(int i) => Math.Min(_rows[i].Top + FirstBase + MarkerBelowName, _rows[i].Bottom);
         double Y0 = _rows[r0].Top, Y1 = _rows[r1].Bottom;
         var last = Math.Max(0, n - 2);
         for (var i = 0; i <= last; i++)
         {
-            double a = i == 0 ? 0 : Mid(i), b = i == last ? _tableEnd : Mid(i + 1);
+            double a = i == 0 ? 0 : Anchor(i), b = i == last ? _tableEnd : Anchor(i + 1);
             a = Math.Max(a, Y0); b = Math.Min(b, Y1);
             if (b <= a) continue;
-            if (_rows[i].P.TracksToNext == TrackCount.Single) c.Fill(xGap - 0.25, Py(a), WGap + 0.5, Py(b) - Py(a));
+            if (SingleStretch(i)) c.Fill(xGap - 0.25, Py(a), WGap + 0.5, Py(b) - Py(a));
         }
+    }
+
+    /// <summary>
+    /// Szlak od wiersza i do następnego jest jednotorowy: tak oznaczony posterunek (także pominięty przystanek
+    /// na tym szlaku) albo odcinek, na którym kolumny V<sub>P</sub>/V<sub>L</sub> są połączone (linia jednotorowa).
+    /// </summary>
+    /// <summary>Postój handlowy – rodzaj postoju zawiera „ph”.</summary>
+    private static bool IsCommercialStop(RoutePoint p) =>
+        (p.StopKinds ?? "").Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries).Any(x => x.Trim().Equals("ph", StringComparison.OrdinalIgnoreCase));
+
+    private bool SingleStretch(int i)
+    {
+        var r = _rows[i];
+        if (r.P.TracksToNext == TrackCount.Single) return true;
+        if (i + 1 < _rows.Count)
+        {
+            for (var k = r.Index + 1; k < _rows[i + 1].Index; k++)
+                if (_t.Points[k].TracksToNext == TrackCount.Single) return true;
+            var s0 = r.S; var s1 = _rows[i + 1].S;
+            if (s1 - s0 > 1e-6 && SegSingleAt((s0 + s1) / 2)) return true;
+        }
+        return false;
+    }
+
+    private bool SegSingleAt(double s)
+    {
+        foreach (var g in _segs)
+        {
+            double a = _evs[g.Ev0].S, b = _evs[g.Ev1].S;
+            if (s >= Math.Min(a, b) - 1e-9 && s <= Math.Max(a, b) + 1e-9) return g.Single;
+        }
+        return false;
     }
 
     private void DrawRow(Canvas c, Row r, double top, double bottom, bool firstOnPage, bool firstRow, bool lastRow)
     {
         var p = r.P;
+        // szare tło godzin na posterunku z postojem rozkładowym (tylko rubryka godzin, bez czasów jazdy)
+        if (_print.ShadeStopTimes && p.Stop && !firstRow && !lastRow && IsCommercialStop(p))
+            c.Fill(xTime + Thin / 2, top + Thin / 2, WTime - Thin, bottom - top - Thin, ShadeColor);
         // linia dolna wiersza (kolumny 5–9)
         c.HLine(xSt, xEnd, bottom, Thin);
 
@@ -890,7 +930,7 @@ public sealed class TimetableLayout
         var single = _rows.Count == 1;
 
         void Dash(double y) => c.HLine(xTime + 4, xTravel - 4, y - 3.4, 0.8);
-        void Bar(double y) => c.VLine(xTime + 11.5, y - 8.2, y - 0.3, 0.8);
+        void Bar(double y) => c.VLine((xTime + xTravel) / 2, y - 8.2, y - 0.3, 0.8); // przejazd – kreska na środku rubryki godzin
         void Time(string s, double y, bool bold)
         {
             if (ClockTime.TryParse(s, out var t))

@@ -49,6 +49,8 @@ public partial class PrintSettings : ObservableObject
     [ObservableProperty] private string _simulationNoteText = "Rozkład symulacyjny – wyłącznie do użytku w symulatorze";
     /// <summary>Dołącz do karty stronę z wykazem ostrzeżeń na trasie pociągu.</summary>
     [ObservableProperty] private bool _includeRestrictionList = true;
+    /// <summary>Szare tło godzin przyjazdu i odjazdu na posterunkach z postojem handlowym „ph” (kolumna 6, rubryka 1).</summary>
+    [ObservableProperty] private bool _shadeStopTimes;
 }
 
 public enum TrackSide
