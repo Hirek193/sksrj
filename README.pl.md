@@ -111,6 +111,7 @@ tor, km od–do, prędkość, rodzaj pociągów, przyczyna, ważność – oraz 
 ### Gotowa wersja dla Windows
 
 Pobierz paczkę z zakładki *Releases* (lub zbuduj ją sam – poniżej), rozpakuj i uruchom `SKSRJ.exe`.
+Każdy push na `main` jest automatycznie budowany przez GitHub Actions (`.github/workflows/prerelease.yml`) i publikowany jako **prerelease** `build-1.0.<n>` z paczką dla Windows (wymaga .NET 8), samodzielnym `.exe` dla Windows, wersją dla Linuksa i przykładowymi kartami; zachowywanych jest 10 ostatnich prerelease'ów.
 Wymagany jest [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) (x64).
 
 ### Ze źródeł
