@@ -113,6 +113,7 @@ generator** (random, optionally seeded) to add variety to simulator runs.
 ### Ready-made Windows build
 
 Download the package from *Releases* (or build it yourself – see below), unpack it and run `SKSRJ.exe`.
+Every push to `main` is built automatically by GitHub Actions (`.github/workflows/prerelease.yml`) and published as a **prerelease** `build-1.0.<n>` with a Windows package (needs .NET 8), a standalone Windows `.exe`, a Linux build and the sample cards; the last 10 prereleases are kept.
 The [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) (x64) is required.
 
 ### From source
